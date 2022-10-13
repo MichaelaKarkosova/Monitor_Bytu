@@ -1,0 +1,1 @@
+<H1 class="text-center error">Chyba! Nejsou zde žádné byty</H1>
