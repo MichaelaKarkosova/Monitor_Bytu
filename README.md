@@ -6,13 +6,13 @@ Doplňuje speciální filtry, počítá vzdálenosti a pracuje s daty.
 Je veřejně dostupná na odkaze http://monitorbytu.eu/
 
 Použité technologie, knihovny a další:
-Smarty - šablonovací jazyk
-PHP
-Javascript 
-Mapy.cz API - Pro výpočty vzdálenost od metra a centra
-Composer
-Webhook  - pro odesílání notifikací o nových bytech na discord 
-Na straně serveru také běží CRON, který dělá každé 4 hodiny postupný sběr dat
+- Smarty - šablonovací jazyk
+- PHP
+- Javascript 
+- Mapy.cz API - Pro výpočty vzdálenost od metra a centra
+- Composer
+- Webhook  - pro odesílání notifikací o nových bytech na discord 
+- Na straně serveru také běží CRON, který dělá každé 4 hodiny postupný sběr dat
 
 
 Použité návrhové vzory:
