@@ -13,7 +13,8 @@ Použité technologie, knihovny a další:
 - Composer
 - Webhook  - pro odesílání notifikací o nových bytech na discord 
 - Na straně serveru také běží CRON, který dělá každé 4 hodiny postupný sběr dat
-
+- Symfony DOM Crawler 
+- Symfony console 
 
 Použité návrhové vzory:
 - Chain
