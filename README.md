@@ -25,6 +25,6 @@ Konfiguraci řeší .env soubory
 
 Aplikace vznikla jako pomůcka pro mě, jelikož se chystám brzo stěhovat do Prahy. Zároveň je to ale skvělý projekt pro portfolio.
 
-Obsahuje také 3 barevné módy
+Obsahuje také 2 barevné módy
 - Light - laděn do modro-bíleho vzhledu
 - Dark  - laděn do černo-šedivého vzhledu
