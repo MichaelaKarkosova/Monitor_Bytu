@@ -15,6 +15,7 @@ Použité technologie, knihovny a další:
 - Na straně serveru také běží CRON, který dělá každé 4 hodiny postupný sběr dat
 - Symfony DOM Crawler 
 - Symfony console 
+- Boostrap
 
 Použité návrhové vzory:
 - Chain
