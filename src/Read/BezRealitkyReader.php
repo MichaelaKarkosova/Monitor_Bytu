@@ -6,6 +6,8 @@ use App\ValueObject\Apartment;
 use App\ValueObject\Apartment_detailed;
 use App\ValueObject\ApartmentsResult;
 use Symfony\Component\DomCrawler\Crawler;
+use GuzzleHttp\Client;
+
 
 //v této třídě čteme data z webu bezrealitky
 class BezRealitkyReader implements ChainableReaderInterface {
@@ -26,26 +28,35 @@ class BezRealitkyReader implements ChainableReaderInterface {
         public function read(string $source): ApartmentsResult {
             $i = 1;
             $finalapartments = [];
+             $ok = true;
             //pokud stránka není v url, resp. v geetu není uvedena, automaticky ji bereme jako první a dodáváme tuto informaci do odkazu
             if (!strpos($source, "&page")){
                 $source .= "&page=1";
             }
+           
             do {
-                $proxy = '198.59.191.234:808';
-             $client = \Symfony\Component\HttpClient\HttpClient::create(['headers' => [
-            'user-agent' => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.157 Safari/537.36',
-            'Accept' => 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'],
-            'proxy' => $proxy,]);
-               // var_dump($http_response_header);
-                }
-            catch (exception $e){
-                echo $e;
-            }
+                //vytáhneme si data z url,kde je výpis všech byt
+             $client = new \GuzzleHttp\Client(['headers' => [
+            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
+            'Accept-Language' => 'en-US,en;q=0.9',
+            'Accept-Encoding' => 'gzip, deflate, br',
+            'Referer' => $source,
+            'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'],
+                ]);
+            // $client->get();
 
-            $crawler = $client->request('GET', $source);
+               // var_dump($http_response_header);
+  $request = $client->get($source);
+$html = (string) $request->getBody();
+$crawler = new Crawler($html);
                 //pokud je vše ok, vytvoříme crawler filter najednotlivé "dlaždice" bytů
-                $ok = 0 < $crawler->filter('section.Section_section___TusU > article.propertyCard')->count();
+                //print_r($crawler);
+                $lastbuttons = $crawler->filter('li.page-item:last-of-type')->text();
+            //  $last = ($lastbuttons === "Další");
+             $ok = $lastbuttons === "Další";
+             //   $ok = 0 < $crawler->filter('section.Section_section___TusU > article.propertyCard')->count();
                 if ($ok) {
+
                     //projedeme jednotlivé byty ve filteru
                     $apartments = $crawler->filter('.Section_section___TusU > article')
                         ->each(static function (Crawler $item): apartment {
@@ -53,18 +64,15 @@ class BezRealitkyReader implements ChainableReaderInterface {
                             $name = $item->filter('h2')->text();
                             //vytáhneme odkaz na stránku s podobným výpisem informací o bytu
                             [$href, $text] = $item->filter('h2 > a')->extract(['href', '_text'])[0];
-                            //vytáhneme cenu bytu
-   
                             //vytáhneme název inzerátu
                             $name = str_replace("Pronájem bytu", "Pronájem bytu ", $name);
-                            //v ceně mohou být 2 ceny - nájem a poplatky. Rozdělíme je tedy a dáme do pole
-                     $nodes =  $item->filter('.PropertyPrice_propertyPrice__aJuok > span');
+                            //nastavíme pomocnou proměnnou
+                    $nodes =  $item->filter('.PropertyPrice_propertyPrice__aJuok > span');
                             $i = 0;
                             $rent = 0;
                             $price = 0;
                            foreach ($nodes as $n){
                             $class = $item->filter('.PropertyPrice_propertyPrice__aJuok > span')->extract(["class"])[$i];
-                            echo $class;
                                 if ($class === "PropertyPrice_propertyPriceAmount___dwT2"){
                                     $rent = preg_replace('/\D+/', "", $n->textContent);
                                 }
@@ -73,9 +81,7 @@ class BezRealitkyReader implements ChainableReaderInterface {
                                 }
                                 $i++;
                             }
-                            echo $price;
-                            echo $rent;
-                            $finalprice = $price+$rent;
+                            $finalprice = $rent+$price;
                             //vytáhnemez z výpisu část Prahy
                             $part = $item->filter(".PropertyCard_propertyCardHeadline__y3bhA > a > span:nth-child(2)")->text();
                             //a nastavíme ji také do longpartu - bude potřeba při vkládání do DB
@@ -104,6 +110,8 @@ class BezRealitkyReader implements ChainableReaderInterface {
                     $nextpage .= "&page=" . $i;
                     $source = $nextpage;
                     //zkopírujeme obsah bytů na aktuální stránce do pole $finalapartments, kde se nachází všechny byty ze všech stránek.
+                    print_r($finalapartments);
+          
                     $finalapartments = array_merge($finalapartments, $apartments);
                 }
             }
@@ -162,7 +170,7 @@ class BezRealitkyReader implements ChainableReaderInterface {
                                 $condition = str_replace("Stav", "", $condition);
                                 return ["condition" => $condition];
                             }
-                            if (strpos($line->text(), "m²")  !== FALSE && (strpos($line->text(), "zahrádka") === FALSE) && (strpos($line->text(), "Lodžie")) === FALSE) && (strpos($line->text(), "Sklep")) === FALSE) {
+                            if (strpos($line->text(), "m²") !== FALSE && strpos($line->text(), "zahrádka") === FALSE && (strpos($line->text(), "Lodžie") === FALSE && strpos($line->text(), "Sklep") === FALSE && strpos($line->text(), "Terasa") === FALSE) && strpos($line->text(), "Balkón") === FALSE) {
                                 $area = $line->text();
                                 $area = preg_replace('/\D+/', "", $area);
                                 return ["area" => $area];
@@ -211,7 +219,7 @@ class BezRealitkyReader implements ChainableReaderInterface {
                                 $condition = str_replace("Stav", "", $condition);
                                 return ["condition" => $condition];
                             }
-                            if (strpos($line->text(), "m²")  !== FALSE && (strpos($line->text(), "zahrádka")) === FALSE) {
+                            if (strpos($line->text(), "m²") !== FALSE && strpos($line->text(), "zahrádka") === FALSE && (strpos($line->text(), "Lodžie") === FALSE && strpos($line->text(), "Sklep") === FALSE && strpos($line->text(), "Terasa") === FALSE) && strpos($line->text(), "Balkón") === FALSE) {
                                 $area = $line->text();
                                 $area = preg_replace('/\D+/', "", $area);
                                 return ["area" => $area];
