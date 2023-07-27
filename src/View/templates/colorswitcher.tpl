@@ -1,13 +1,30 @@
 
-	<form name="colors" id="colors">
+    <div style="flex: 1 1 0;">
+        <script>
+        var i = 0;
+        $(document).ready(function () {
+                urls = Object.values(document.getElementsByClassName("addres"));
+                urls.forEach(loop);
+        });
+        function loop(item, index) {
+            var items = item.innerHTML;
+            window.countDistance(items, i);
+                    getMapCoordsFromAddress(items, function (result) {
+                var NearestLoc = getNearestStation(result.coords.x, result.coords.y);
+                var coords = [result.coords, NearestLoc["coords"]]; 
+                    CreateRoute(coords, function (result2) {
+                        fillRouteInfo(index, NearestLoc["station"], result2, NearestLoc["track"]);
+                });
+            });
+            i++;
+        }
+    </script>
 	{if $colorMode == "dark"}
-		<a class="btn btn-primary color" onclick="update('colormode', 'light');" name="light">Vypnout tmavý mód</a>
+   <a class="btn btn-primary color" onclick="update('colormode', 'light');" name="light" style="width: 100% !important;">Vypnout tmavý mód</a>
 	{else}
-		<a class="btn btn-primary color" onclick="update('colormode', 'dark');" name="dark">Zapnout tmavý mód</a>
+   <a class="btn btn-primary color" onclick="update('colormode', 'dark');" name="dark" style="width: 100% !important;">Zapnout tmavý mód</a>
 	{/if}
-	</form>
-
-
+</div>
 <script>
 function update(a, b) {
 console.log(searchParams);

@@ -7,18 +7,20 @@
         "php": "^7.4",
         "ext-gmp": "*",
         "ext-json": "*",
-        "ext-mysqli": "*",
+        "ext-pdo": "*",
         "ext-zlib": "*",
         "68publishers/environment": "^0.5.0",
         "nette/utils": "^3.2",
         "phpmailer/phpmailer": "^6.6",
+        "postalsys/emailengine-php": "^1.2",
         "react/async": "^3.0",
         "react/http": "^1.8",
         "smarty/smarty": "^4.2",
         "symfony/console": "^5.4",
         "symfony/css-selector": "^5.4",
         "symfony/dom-crawler": "^5.4",
-        "team-reflex/discord-php": "^7.3"
+        "team-reflex/discord-php": "^7.3",
+        "tracy/tracy": "^2.9"
     },
     "require-dev": {
         "nette/tester": "^2.4",

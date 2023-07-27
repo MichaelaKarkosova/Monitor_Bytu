@@ -9,4 +9,6 @@ final class ApartmentsTemplateParameters extends TemplateParameters {
 
     public int $page;
 
+    public int $count;
+
 }

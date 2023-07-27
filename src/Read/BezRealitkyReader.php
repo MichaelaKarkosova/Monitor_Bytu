@@ -31,10 +31,18 @@ class BezRealitkyReader implements ChainableReaderInterface {
                 $source .= "&page=1";
             }
             do {
-                //vytáhneme si data z url,kde je výpis všech bytů
-                $html = file_get_contents($source);
-                //vytvoříme nový crawler, který nám pomůže data získat
-                $crawler = new Crawler($html);
+                $proxy = '198.59.191.234:808';
+             $client = \Symfony\Component\HttpClient\HttpClient::create(['headers' => [
+            'user-agent' => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.157 Safari/537.36',
+            'Accept' => 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'],
+            'proxy' => $proxy,]);
+               // var_dump($http_response_header);
+                }
+            catch (exception $e){
+                echo $e;
+            }
+
+            $crawler = $client->request('GET', $source);
                 //pokud je vše ok, vytvoříme crawler filter najednotlivé "dlaždice" bytů
                 $ok = 0 < $crawler->filter('section.Section_section___TusU > article.propertyCard')->count();
                 if ($ok) {
@@ -46,20 +54,28 @@ class BezRealitkyReader implements ChainableReaderInterface {
                             //vytáhneme odkaz na stránku s podobným výpisem informací o bytu
                             [$href, $text] = $item->filter('h2 > a')->extract(['href', '_text'])[0];
                             //vytáhneme cenu bytu
-                            $rent = $item->filter('.PropertyPrice_propertyPrice__aJuok')->text();
+   
                             //vytáhneme název inzerátu
                             $name = str_replace("Pronájem bytu", "Pronájem bytu ", $name);
-                            //nastavíme pomocnou proměnnou
-                            $prices = $rent;
                             //v ceně mohou být 2 ceny - nájem a poplatky. Rozdělíme je tedy a dáme do pole
-                            $prices = explode("Kč", $prices);
-                            //u obou cen replacneme mezery - např z 15 000 uděláme 150000 a získáme tak číslo
-                            $prices[0] = preg_replace('/\D+/', "", $prices[0]);
-                            $prices[1] = preg_replace('/\D+/', "", $prices[1]);
-                            //sečteme obě ceny a získáme finální
-                            $finalprice = (int)($prices[0]) + (int)($prices[1]);
-                            //cena nájmu bez poplatků
-                            $rent = (int)($prices[0]);
+                     $nodes =  $item->filter('.PropertyPrice_propertyPrice__aJuok > span');
+                            $i = 0;
+                            $rent = 0;
+                            $price = 0;
+                           foreach ($nodes as $n){
+                            $class = $item->filter('.PropertyPrice_propertyPrice__aJuok > span')->extract(["class"])[$i];
+                            echo $class;
+                                if ($class === "PropertyPrice_propertyPriceAmount___dwT2"){
+                                    $rent = preg_replace('/\D+/', "", $n->textContent);
+                                }
+                                if ($class === "PropertyPrice_propertyPriceAdditional__gMCQs me-1"){
+                                    $price = preg_replace('/\D+/', "", $n->textContent);
+                                }
+                                $i++;
+                            }
+                            echo $price;
+                            echo $rent;
+                            $finalprice = $price+$rent;
                             //vytáhnemez z výpisu část Prahy
                             $part = $item->filter(".PropertyCard_propertyCardHeadline__y3bhA > a > span:nth-child(2)")->text();
                             //a nastavíme ji také do longpartu - bude potřeba při vkládání do DB
@@ -146,7 +162,7 @@ class BezRealitkyReader implements ChainableReaderInterface {
                                 $condition = str_replace("Stav", "", $condition);
                                 return ["condition" => $condition];
                             }
-                            if (strpos($line->text(), "m²")  !== FALSE && (strpos($line->text(), "zahrádka")) === FALSE) {
+                            if (strpos($line->text(), "m²")  !== FALSE && (strpos($line->text(), "zahrádka") === FALSE) && (strpos($line->text(), "Lodžie")) === FALSE) && (strpos($line->text(), "Sklep")) === FALSE) {
                                 $area = $line->text();
                                 $area = preg_replace('/\D+/', "", $area);
                                 return ["area" => $area];

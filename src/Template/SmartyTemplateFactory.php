@@ -15,7 +15,7 @@ final class SmartyTemplateFactory implements TemplateFactoryInterface {
         //nastavíme složku, kde se mají cachovat existující šablony
         $smarty->setCompileDir(__DIR__ . '/../../var/cache/templates');
         //vytvoříme nový template
-        $template = new SmartyTemplate($smarty);
+        $template = new TwigTemplate($smarty);
         //nastavíme soubor templatu ve formátu .tpl
         $template->setFile($filename);
         //pokud sem přijdou parametry, nastavíme je.

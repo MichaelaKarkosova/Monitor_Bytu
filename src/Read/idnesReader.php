@@ -11,6 +11,9 @@ use App\ValueObject\Apartment_detailed;
 use App\ValueObject\ApartmentsResult;
 use Nette\Utils\Json;
 use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\HttpClient\HttpClient;
+use Goutte\Client;
+
 
 class idnesReader implements ChainableReaderInterface
 {
@@ -34,10 +37,31 @@ class idnesReader implements ChainableReaderInterface
         $finalapartments = [];
         do {
             //sleep nám pomáhá získat data tak, aby nedošlo k timeoutu ze strany idnesu
-            sleep(6);
+            sleep(20);
             //vytáhneme obsah webu
-            $html = file_get_contents($source);
-            $crawler = new Crawler($html);
+            $proxylist = "https://www.sslproxies.org/";
+            $proxies= file_get_contents($proxylist);
+$ip = '198.59.191.234:8080';
+$aContext = array(
+    'https' => array(
+        'proxy' => 'tcp://'.$ip,
+        'request_fulluri' => false,
+    ),
+);
+//$cxContext = stream_context_create($aContext);
+            try{
+                $proxy = '198.59.191.234:808';
+             $client = \Symfony\Component\HttpClient\HttpClient::create(['headers' => [
+            'user-agent' => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.157 Safari/537.36',
+            'Accept' => 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'],
+            'proxy' => $proxy,]);
+               // var_dump($http_response_header);
+                }
+            catch (exception $e){
+                echo $e;
+            }
+
+            $crawler = $client->request('GET', $source);
             //projdeme všechny dlaždice s byty a jednotlivé prvky v nich
             $apartments = $crawler->filter('.c-products__list .c-products__item article a.c-products__link')
                 ->each(static function (Crawler $item) use ($source): apartment {

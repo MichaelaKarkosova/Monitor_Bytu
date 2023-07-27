@@ -35,14 +35,12 @@
     {/if}
 
     <div class="container-sm themed-container text-center">
+        <h6>Data k: {$item.imported|date_format:"%d. %m. %y, %H:%M"}</h6>
         <h5><b>{$item.name}</b></h5>
         <h6>{$item.part}</h6>
         <h6>{$item.pricetotal} Kč/měsíc </h6>
         <h6>{$item.dispozice}</h6>
         <h6>{$item.vymera} m2</h6>
-        {if $source=="idnes"}
-            <h6> Cena je BEZ poplatků, jen nájem</h6>
-        {/if}
         <h6 id="distance{$i}">Vzdálenost od centra:  </h6>
         <h6 id="metro{$i}">Nejbližší metro:  </h6>
         <h6><b>Zdroj: </b>{$source}</h6>
@@ -64,9 +62,9 @@
                 <h6><b>Balkon: </b>{$balkon}</h6>
                 <h5><b>Cena: </b>{$item.price} + {$item.pricetotal - $item.price} Kč  </h5>
                 {if $source=="idnes" or $source=="realityMix"}
-                    <h5> Cena je BEZ poplatků, jen nájem</h5>
+                    <b>Zobrazená cena je BEZ poplatků</b>
                 {/if}
-                <a class="url" href="{$item.url}" target="blank">Podrobnosti</a>
+                <a class="url btn btn-secondary" href="{$item.url}" target="blank">Podrobnosti</a>
 
             </div>
         </div>

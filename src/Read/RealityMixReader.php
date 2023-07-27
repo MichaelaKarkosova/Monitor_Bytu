@@ -6,7 +6,9 @@ use App\ValueObject\Apartment;
 use App\ValueObject\Apartment_detailed;
 use App\ValueObject\ApartmentsResult;
 use Symfony\Component\DomCrawler\Crawler;
-
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 //v této třídě čteme data z webu realityMix
 class RealityMixReader implements ChainableReaderInterface {
 
@@ -24,13 +26,16 @@ class RealityMixReader implements ChainableReaderInterface {
     }
 
     public function read(string $source): ApartmentsResult {
+                        echo "SOURCE: $source";
         $i = 1;
         $finalapartments = [];
         //pokud stránka není v url, resp. v geetu není uvedena, automaticky ji bereme jako první a dodáváme tuto informaci do odkazu
         if (!strpos($source, "&stranka")){
             $source .= "&stranka=1";
         }
+
         do {
+
             //vytáhneme si data z url,kde je výpis všech bytů. Zároveň odebereme z veškerých reklam tag li.
             $html = file_get_contents($source);
             $html = str_replace('li class="rmix-acquisition-banner"', "", $html);
@@ -100,7 +105,6 @@ class RealityMixReader implements ChainableReaderInterface {
         //vrátíme, o který reader se jednalo
         return new ApartmentsResult('realitymix', array_filter($finalapartments));
     }
-
 
     //tato metoda získává detaily bytu
     public function getDetails(): array {
@@ -172,7 +176,7 @@ class RealityMixReader implements ChainableReaderInterface {
                             if (strpos($line->text(), "Dispozice bytu: ") !== FALSE) {
                                 $size = $line->text();
                                 $size = str_replace("Dispozice bytu: ", "", $size);
-                                if (strpos($size, "atypické") && strpos($size, "atypický")){
+                                if (strpos($size, "atypick") && strpos($size, "atypick")){
                                     $size = "Atypický";
                                 }
                                 return ["size" => $size];

@@ -21,7 +21,11 @@ final class IndexParameters extends TemplateParameters {
 
     public array $elevator;
 
+    public array $imported;
+
     public int $sum;
+
+    public int $count;
 
     public string $order;
 
@@ -32,4 +36,6 @@ final class IndexParameters extends TemplateParameters {
     public string $http;
 
     public string $colormode;
+
+    public string $totalfilters;
 }
