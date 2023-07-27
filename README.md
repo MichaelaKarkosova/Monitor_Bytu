@@ -16,6 +16,7 @@ Použité technologie, knihovny a další:
 - Symfony DOM Crawler 
 - Symfony console 
 - Boostrap
+- GuzzleHTTP
 
 Použité návrhové vzory:
 - Chain
