@@ -104,6 +104,23 @@
                         {/foreach}
                     </div>
                 </div>
+                                <div href="#" class="list-group-item list-group-item-action py-3 lh-sm">
+                    <div class="d-flex w-100 align-items-center justify-content-between">
+                        <strong class="mb-1">Vybavení</strong>
+                    </div>
+                    <div class="col-10 mb-1">
+                        {foreach $furniture as $f}
+                            {if $f.vybaveni eq NULL or $f.vybaveni eq "0"}
+                                {$f.vybaveni = "Neuvedeno"}
+                            {/if}
+
+                            <div class="full">
+                                <input type="checkbox" id="vybaveni_{rawurlencode($f.vybaveni)}" value="{rawurlencode($f.vybaveni)}" {if isset($filters['furniture']) && in_array(rawurlencode($f['vybaveni']), $filters['furniture'])}checked{/if} name="furniture[]"">
+                                <label for="vybaveni_{$f.vybaveni}">{$f.vybaveni} ({$f.count})</label>
+                            </div>
+                        {/foreach}
+                    </div>
+                </div>
 
                 <div href="#" class="list-group-item list-group-item-action py-3 lh-sm" aria-current="true">
                     <div class="d-flex w-100 align-items-center justify-content-between">
@@ -144,29 +161,6 @@
                                 {if isset($filters['elevator']) && in_array(rawurlencode($f['vytah']), ($filters['elevator']))}
                                 {/if}
 
-                            </div>
-                        {/foreach}
-                    </div>
-                </div>
-                <div href="#" class="list-group-item list-group-item-action py-3 lh-sm">
-                    <div class="d-flex w-100 align-items-center justify-content-between">
-                        <strong class="mb-1">Balkon</strong>
-                    </div>
-                    <div class="col-10 mb-1">
-                        {foreach $balcony as $f}
-                            {if $f.balkon eq 1}
-                                {$f.balkon = "Ano"}
-                            {elseif $f.balkon eq "0"}
-                                {$f.balkon = "Ne"}
-                            {else}
-                                {$f.balkon = "Neuvedeno"}
-                            {/if}
-                                                            {if isset($filters['balcony']) && in_array(rawurlencode($f['balkon']), ($filters['balcony']))}
-    
-                                {/if}
-                            <div class="half">
-                                <input type="checkbox" id="balkon_{$f.balkon}" value="{rawurlencode($f.balkon)}" {if isset($filters['balcony']) && in_array($f['balkon'], $filters['balcony'])}checked{/if} name="balcony[]">
-                                <label for="balkon_{$f.balkon}">{$f.balkon} ({$f.count})</label>
                             </div>
                         {/foreach}
                     </div>

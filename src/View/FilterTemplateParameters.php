@@ -23,5 +23,7 @@ final class FilterTemplateParameters extends TemplateParameters {
 
     public int $sum;
 
+    public string $furniture;
+
     public string $order;
 }

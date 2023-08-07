@@ -36,31 +36,33 @@ class DataRenderer {
         //vezmeme výsledky sql
         $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         //a vrátíme je
+        //print_r($result);
         return $result;
     }
 
     public function getActiveFiltersForSmarty(){
-        $i = 0;
-        $done = false;
-        $activefilters = '';
+                    $i = 0;
+            $activefilters = '';
         [$conditions, $binds, $params] = $this->getActiveFilters();
-        foreach ($conditions as $c) {
+            foreach ($conditions as $c) {
+            // kolik přičítáme v další iteraci, pokud nejde o pole, tak vždy jen 1
             $indexAddition = 1;
-
-            if ($c === "pricetotal >= ?"){
+    
+            // tvoje stávající podmínky
+            if ($c == "pricetotal >= ?"){
                 $activefilters = $activefilters."od ".$params[$i]." kč";
             }
-            if ($c === "pricetotal <= ?"){
+            if ($c == "pricetotal <= ?"){
                 $activefilters = $activefilters.", do ".$params[$i]." kč";
             }
-            if ($c === "vymera >= ?"){
+            if ($c == "vymera >= ?"){
                 $activefilters = $activefilters.", od ".$params[$i]." m2";
             }
-            if ($c === "vymera <= ?"){
+            if ($c == "vymera <= ?"){
                 $activefilters = $activefilters.", do ".$params[$i]." m2";
              }
     
-            if (false !== strpos($c, 'vytah IS NULL)')) {
+               if (false !== strpos($c, 'vytah IS NULL)')) {
                 $activefilters = $activefilters.", vytah: nezáleží";
                }
             if (false !== strpos($c, 'vytah = 0)')) {
@@ -69,7 +71,7 @@ class DataRenderer {
             if (false !== strpos($c, 'vytah = 1)')) {
                 $activefilters = $activefilters.", s výtahem";
                }
-            if (false !== strpos($c, 'balkon IS NULL)')) {
+               if (false !== strpos($c, 'balkon IS NULL)')) {
                 $activefilters = $activefilters.", balkon: nezáleží";
                }
             if (false !== strpos($c, 'balkon = 0)')) {
@@ -78,21 +80,21 @@ class DataRenderer {
             if (false !== strpos($c, 'balkon = 1)')) {
                 $activefilters = $activefilters.", s balkonem";
                }
+    // pokud $c obsahuje "dispozice IN"
+
             $toadd = "";
             if (false !== strpos($c, 'patro IN')) {
               $toadd = ". patro";
               $activefilters = $activefilters.$toadd;
            }       
-           else if (false !== strpos($c, 'IN')){
-                $indexAddition = substr_count($c, '?'); 
-                 $activefilters .= ', ' . implode(', ', array_slice($params, $i, $indexAddition)).$toadd; 
-                 $done = true;
+            else if (false !== strpos($c, 'IN')) {
+                $indexAddition = substr_count($c, '?'); // pro příští iteraci budeme přičítat tolik, kolik otazníků se zde nachází
+                 $activefilters .= ', ' . implode(', ', array_slice($params, $i, $i + $indexAddition)).$toadd; // spojíme $params s indexy mezi $i a ($i + $indexAddition)
             }
     
         $i += $indexAddition;
     }
     $activefilters = preg_replace("/\, \d+,/", ",", $activefilters);
-    
     return $activefilters;
 }
 
@@ -123,7 +125,6 @@ class DataRenderer {
         //vytáhneme z výpisu bytů informaci o stavu bytů a předáme ji do templatu jako parametr "stav"
         $templateParams->sizes = $this->getDataFromDb("dispozice", 1);
         //vytáhneme z výpisu bytů informaci o tom, zda v bytu mohou být zvířata a předáme ji do templatu jako parametr "animals"
-        $templateParams->furniture = $this->getDataFromDb("vybaveni", 1);
         $templateParams->animals = $this->getDataFromDb("zvirata", 1);
         $templateParams->imported = $this->getDataFromDb("DATE_ADD(imported,interval 2 hour)", 0);
         //vytáhneme z výpisu bytů informaci o přítomnosti balkonu a předáme ji do templatu jako parametr "balcony"
@@ -173,6 +174,8 @@ class DataRenderer {
         if ($conditions != NULL) {
             //dekodujeme filtry zpátky, aby obsahovaly i diakritiku a mohli jsme s nimi pracovat v databázi
             $params = $this->decodeFilters($params);
+            //print_r($conditions);
+            //print_r($params);
 
             //nastavíme where podmínku pomocí všech podmínek
             $where = empty($conditions) ? '' : ('WHERE ' . implode(' AND ', $conditions));
@@ -184,12 +187,15 @@ class DataRenderer {
          else {
              $sql = "select b.id, b.part, b.longpart, b.pricetotal, bd.balkon, b.part, bd.dispozice, bd.vymera, bd.zvirata, bd.patro, bd.vybaveni, bd.vytah, bd.stav, b.price, b.url, b.name, b.imported from byty b join byty_detaily bd on bd.byty_id=b.id order by pricetotal". $limit;
          }
+         //print_r($sql);
          //pro jistotu znova zkontrolujeme, zda jsou filtry aktivní
         $stmt = $db->prepare($sql);
         if ($conditions != NULL) {
             //nabindujeme data do statementu
             $stmt->bind_param(implode('', $binds), ...array_values($params));
             //druhý statement bez limitu
+            //print_r($params);
+            //print_r($binds);
         }
         //vykonáme sql query
         $stmt->execute();
@@ -197,6 +203,7 @@ class DataRenderer {
         $result = $stmt->get_result();
         $apartments = $result->fetch_all(MYSQLI_ASSOC);
         //a vrátíme výsledky nebo prázdné pole
+       // print_r($apartments);
             return $apartments ?? [];
     }
 
@@ -218,16 +225,21 @@ class DataRenderer {
             //nastavíme where podmínku pomocí všech podmínek
             $where = empty($conditions) ? '' : ('WHERE ' . implode(' AND ', $conditions));
             $sql = "select b.id, b.longpart, b.part, bd.balkon, b.pricetotal, b.part, bd.dispozice, bd.vymera, bd.zvirata, bd.patro, bd.vybaveni, bd.vytah, bd.stav, b.price, b.url, b.name, b.imported from byty b join byty_detaily bd on bd.byty_id=b.id " . $where . " order by " . $order_s;
+            //echo $sql;
             }
+           // echo $sql;
          else {
              $sql = "select b.id, b.part, b.longpart, b.pricetotal, bd.balkon, b.part, bd.dispozice, bd.vymera, bd.zvirata, bd.patro, bd.vybaveni, bd.vytah, bd.stav, b.price, b.url, b.name, b.imported from byty b join byty_detaily bd on bd.byty_id=b.id order by pricetotal";
          }
+         //print_r($sql);
          //pro jistotu znova zkontrolujeme, zda jsou filtry aktivní
         $stmt = $db->prepare($sql);
         if ($conditions != NULL) {
             //nabindujeme data do statementu
             $stmt->bind_param(implode('', $binds), ...array_values($params));
             //druhý statement bez limitu
+            //print_r($params);
+            //print_r($binds);
         }
         //vykonáme sql query
         $stmt->execute();
@@ -235,6 +247,7 @@ class DataRenderer {
         $result = $stmt->get_result();
         $apartments = $result->fetch_all(MYSQLI_ASSOC);
         //a vrátíme výsledky nebo prázdné pole
+       // print_r($apartments);
         return count($apartments) ?? 0;
     }
 
@@ -302,7 +315,6 @@ class DataRenderer {
             $params[] = rawurldecode($filters['areamin']);
             $binds[] = "i";
         }
-
         if (isset($filters['areamax'])) {
             $conditions[] = 'vymera <= ?';
             $params[] = $filters['areamax'];
@@ -333,6 +345,7 @@ class DataRenderer {
                 $conditions[] = '(' . implode(' OR ', $innerConditions) . ')';
             }
         }
+
         if (isset($filters['size']) && !empty($filters['size'])) {
             $innerValue = $filters['size'];
             $innerConditions = [];
@@ -352,8 +365,6 @@ class DataRenderer {
                 $conditions[] = '(' . implode(' OR ', $innerConditions) . ')';
             }
         }
-
-
         if (isset($filters['stav']) && !empty($filters['stav'])) {
             $innerValue = $filters['stav'];
             $innerConditions = [];
@@ -383,9 +394,12 @@ class DataRenderer {
             }
 
             if (count($innerValue)) {
+              //  print_r($innerValue);
                 $innerConditions[] = 'patro IN (' . implode(', ', array_fill(0, count($innerValue), '?')) . ')';
                 $params = array_merge($params, $innerValue);
+            //   print_r($implode(', ', array_fill(0, count($innerValue));
                 $binds = array_merge($binds, array_fill(0, count($innerValue), 's'));
+               // print_r($binds);
             }
 
             if (count($innerConditions)) {
@@ -438,7 +452,7 @@ class DataRenderer {
                 $conditions[] = '(' . implode(' OR ', $innerConditions) . ')';
             }
         }
-  
+
         if (isset($filters['animals']) && !empty($filters['animals'])) {
             $innerValue = $filters['animals'];
             $innerConditions = [];
@@ -464,25 +478,7 @@ class DataRenderer {
                 $conditions[] = '(' . implode(' OR ', $innerConditions) . ')';
             }
         }
-        print_r($c);
-        if (isset($filters['furniture']) && !empty($filters['furniture'])) {
-            $innerValue = $filters['furniture'];
-            $innerConditions = [];
-            if (FALSE !== ($nullIndex = array_search("Neuvedeno", $innerValue, TRUE))) {
-                unset($innerValue[$nullIndex]);
-                $innerConditions[] = 'vybaveni IS NULL';
-            }
 
-            if (count($innerValue)) {
-                $innerConditions[] = 'vybaveni IN (' . implode(', ', array_fill(0, count($innerValue), '?')) . ')';
-                $params = array_merge($params, $innerValue);
-                $binds = array_merge($binds, array_fill(0, count($innerValue), 's'));
-            }
-
-            if (count($innerConditions)) {
-                $conditions[] = '(' . implode(' OR ', $innerConditions) . ')';
-            }
-        }
         return [$conditions, $binds, $params];
 
     }
@@ -532,3 +528,4 @@ class DataRenderer {
         return $filters;
     }
 }
+

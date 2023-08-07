@@ -41,6 +41,7 @@
         <h6>{$item.pricetotal} Kč/měsíc </h6>
         <h6>{$item.dispozice}</h6>
         <h6>{$item.vymera} m2</h6>
+                <h6>{$item.vybaveni}</h6>
         <h6 id="distance{$i}">Vzdálenost od centra:  </h6>
         <h6 id="metro{$i}">Nejbližší metro:  </h6>
         <h6><b>Zdroj: </b>{$source}</h6>
