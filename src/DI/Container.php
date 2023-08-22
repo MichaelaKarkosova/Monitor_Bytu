@@ -19,7 +19,7 @@ use App\Read\ReaderInterface;
 use App\Template\TemplateFactoryInterface;
 use RuntimeException;
 use Symfony\Component\Console\Application;
-use App\Template\TwigTemplateFactory;
+use App\Template\SmartyTemplateFactory;
 
 //tato třída je dependency injector
 //zde se registrují všechny možné služby
@@ -60,7 +60,7 @@ class Container {
             return $this->services['template_factory'];
         }
 
-        return $this->services['template_factory'] = new TwigTemplateFactory();
+        return $this->services['template_factory'] = new SmartyTemplateFactory();
     }
 
     public function getApartmentsNotifier() : ApartmentsNotifierInterface {

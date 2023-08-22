@@ -65,7 +65,7 @@
                 {if $source=="idnes" or $source=="realityMix"}
                     <b>Zobrazená cena je BEZ poplatků</b>
                 {/if}
-                <a class="url btn btn-secondary" href="{$item.url}" target="blank">Podrobnosti</a>
+                <a class="url btn btn-primary" href="{$item.url}" target="blank">Podrobnosti</a>
 
             </div>
         </div>

@@ -41,14 +41,13 @@ class idnesReader implements ChainableReaderInterface
             //vytáhneme obsah webu
             $proxylist = "https://www.sslproxies.org/";
             $proxies= file_get_contents($proxylist);
-$ip = '198.59.191.234:8080';
-$aContext = array(
-    'https' => array(
-        'proxy' => 'tcp://'.$ip,
-        'request_fulluri' => false,
-    ),
-);
-//$cxContext = stream_context_create($aContext);
+            $ip = '198.59.191.234:8080';
+            $aContext = array(
+            'https' => array(
+                'proxy' => 'tcp://'.$ip,
+                'request_fulluri' => false,
+                ),
+            );
              $client = new \GuzzleHttp\Client(['headers' => [
             'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
             'Accept-Language' => 'en-US,en;q=0.9',
@@ -56,13 +55,9 @@ $aContext = array(
             'Referer' => $source,
             'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'],
                 ]);
-            // $client->get();
-
-               // var_dump($http_response_header);
-  $request = $client->get($source);
-$html = (string) $request->getBody();
-$crawler = new Crawler($html);
-            echo "reading";
+            $request = $client->get($source);
+            $html = (string) $request->getBody();
+            $crawler = new Crawler($html);
             //projdeme všechny dlaždice s byty a jednotlivé prvky v nich
             $apartments = $crawler->filter('.c-products__list .c-products__item article a.c-products__link')
                 ->each(static function (Crawler $item) use ($source): apartment {
@@ -111,7 +106,6 @@ $crawler = new Crawler($html);
 
     //v této metodě získáváme detaily bytů
     public function getDetails(): array {
-      echo "reading details";
         $appartments_d = [];
         $db = $this->db->getConnection();
         //vytáhneme všechny idnes adresy na detaily z databáze
@@ -124,20 +118,17 @@ $crawler = new Crawler($html);
             }
             $url = $a['url'];
             //vytvoříme crawler na url z databáze
-                         $client = new \GuzzleHttp\Client(['headers' => [
+            $client = new \GuzzleHttp\Client(['headers' => [
             'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
             'Accept-Language' => 'en-US,en;q=0.9',
             'Accept-Encoding' => 'gzip, deflate, br',
             'Referer' => $url,
             'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'],
                 ]);
-            // $client->get();
 
-               // var_dump($http_response_header);
-  $request = $client->get($a['url']);
-$html = (string) $request->getBody();
-$crawler = new Crawler($html);
-            //
+            $request = $client->get($a['url']);
+            $html = (string) $request->getBody();
+            $crawler = new Crawler($html);
             $size = $crawler->filter('header.b-detail .b-detail__title')->text("");
             //Na idnesu se uvádí dispozice bytu v nadpise. Nadpis tedy rozdělíme na jednotlivé informace.
             $sizesplitted = explode(" ", $size);
@@ -177,6 +168,12 @@ $crawler = new Crawler($html);
             $stairs = $attributes['Podlaží'] ?? NULL;
             $furniture = $attributes['Vybavení'] ?? NULL;
             $area = $attributes['Užitná plocha'] ?? NULL;
+            if (strpos($condition,"dobrý stav")){
+                $condition = "Dobrý";
+            }
+            if (strpos($condition," špatný stav")){
+                $condition = "Špatný";
+            }
             //ve výměře uděláme replace měrné jednotky m² a všech znaků, co nejsou čísla
             $area = str_replace("m²", "", $area);
             $area = str_replace("m2", "", $area);
@@ -215,7 +212,6 @@ $crawler = new Crawler($html);
             $thisapartment = new Apartment_detailed($url, $animals ?? NULL, $furniture ?? NULL, $elevator ?? NULL, (int)$stairs ?? NULL, $condition ?? NULL, $size ?? NULL, $balcony ?? NULL, (int)$area ?? NULL);
             $appartments_d[] = $thisapartment;
         }
-                    echo "returning apartments with details..";
         //a celé pole vrátíme
         return $appartments_d;
     }

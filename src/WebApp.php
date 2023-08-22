@@ -1,10 +1,11 @@
 <?php
-
 namespace App;
+
 
 use App\Database;
 use App\DataRenderer;
 use App\Read\ReaderInterface;
+
 
 class WebApp
 {

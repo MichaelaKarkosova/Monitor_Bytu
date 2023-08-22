@@ -36,29 +36,23 @@ class BezRealitkyReader implements ChainableReaderInterface {
            
             do {
                 //vytáhneme si data z url,kde je výpis všech byt
-             $client = new \GuzzleHttp\Client(['headers' => [
-            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
-            'Accept-Language' => 'en-US,en;q=0.9',
-            'Accept-Encoding' => 'gzip, deflate, br',
-            'Referer' => $source,
-            'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'],
+                 $client = new \GuzzleHttp\Client(['headers' => [
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
+                'Accept-Language' => 'en-US,en;q=0.9',
+                'Accept-Encoding' => 'gzip, deflate, br',
+                'Referer' => $source,
+                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'],
                 ]);
-            // $client->get();
-
-               // var_dump($http_response_header);
-  $request = $client->get($source);
-$html = (string) $request->getBody();
-$crawler = new Crawler($html);
+                $request = $client->get($source);
+                $html = (string) $request->getBody();
+                $crawler = new Crawler($html);
                 //pokud je vše ok, vytvoříme crawler filter najednotlivé "dlaždice" bytů
-                //print_r($crawler);
                 $lastbuttons = $crawler->filter('li.page-item:last-of-type')->text();
-            //  $last = ($lastbuttons === "Další");
-             $ok = $lastbuttons === "Další";
-             //   $ok = 0 < $crawler->filter('section.Section_section___TusU > article.propertyCard')->count();
+                $ok = $lastbuttons === "Další";
                 if ($ok) {
 
                     //projedeme jednotlivé byty ve filteru
-                    $apartments = $crawler->filter('.Section_section___TusU > article')
+                    $apartments = $crawler->filter('.Section_section__gjwvr > article')
                         ->each(static function (Crawler $item): apartment {
                             //name je v dlaždici vždy v <h2>
                             $name = $item->filter('h2')->text();
@@ -67,23 +61,25 @@ $crawler = new Crawler($html);
                             //vytáhneme název inzerátu
                             $name = str_replace("Pronájem bytu", "Pronájem bytu ", $name);
                             //nastavíme pomocnou proměnnou
-                    $nodes =  $item->filter('.PropertyPrice_propertyPrice__aJuok > span');
+                            $nodes =  $item->filter('.PropertyPrice_propertyPrice__lthza > span');
                             $i = 0;
                             $rent = 0;
                             $price = 0;
                            foreach ($nodes as $n){
-                            $class = $item->filter('.PropertyPrice_propertyPrice__aJuok > span')->extract(["class"])[$i];
-                                if ($class === "PropertyPrice_propertyPriceAmount___dwT2"){
+                            $class = $item->filter('.PropertyPrice_propertyPrice__lthza > span')->extract(["class"])[$i];
+                                if ($class === "PropertyPrice_propertyPriceAmount__WdEE1"){
                                     $rent = preg_replace('/\D+/', "", $n->textContent);
                                 }
-                                if ($class === "PropertyPrice_propertyPriceAdditional__gMCQs me-1"){
+                                if ($class === "PropertyPrice_propertyPriceAdditional__5jYQ6"){
                                     $price = preg_replace('/\D+/', "", $n->textContent);
                                 }
                                 $i++;
                             }
+
                             $finalprice = $rent+$price;
-                            //vytáhnemez z výpisu část Prahy
-                            $part = $item->filter(".PropertyCard_propertyCardHeadline__y3bhA > a > span:nth-child(2)")->text();
+                            $parts = $name;
+                            $part = explode(",", $parts)[1];
+                            $part = str_replace(" Praha", "Praha", $part);
                             //a nastavíme ji také do longpartu - bude potřeba při vkládání do DB
                             $longpart = $part;
                             //rozdělíme část Prahy na ulice a část do pole
@@ -97,10 +93,14 @@ $crawler = new Crawler($html);
                                 }
                             }
                             //provedeme regexem replace klíčových slov - Okres Praha, Praha 1-22 a Praha -. Zůstanem nám tedy jen část, např. Holešovice.
+                            $finalpart = str_replace(" Praha", "Praha", $finalpart);
                             $finalpart = preg_replace("/Praha (\d+)( -) /", "", $finalpart);
+
                             $finalpart = str_replace("Praha - ", "", $finalpart);
                             $finalpart = str_replace(", okres Praha", "", $finalpart);
+    
                             //vrátíme object Apartment
+                            $finalpart = str_replace(" Praha - ", "", $finalpart);
                             return
                                 new Apartment($href, $name, $href, $rent, $finalprice, $finalpart, $longpart);
                         });
@@ -110,8 +110,6 @@ $crawler = new Crawler($html);
                     $nextpage .= "&page=" . $i;
                     $source = $nextpage;
                     //zkopírujeme obsah bytů na aktuální stránce do pole $finalapartments, kde se nachází všechny byty ze všech stránek.
-                    print_r($finalapartments);
-          
                     $finalapartments = array_merge($finalapartments, $apartments);
                 }
             }
@@ -131,13 +129,12 @@ $crawler = new Crawler($html);
         foreach ($allapartments as $a) {
             //vytáhneme data z url detailu bytu
             $html = @file_get_contents($a["url"]);
-
             if (FALSE === $html) {
                 continue;
             }
             $crawler = new Crawler(file_get_contents($a["url"]));
             $url= $a["url"];
-            $apartments_all[] = $crawler->filter('.ContentBox_contentBox--outline-grey-medium__c9w0k')
+            $apartments_all[] = $crawler->filter('.ContentBox_contentBox__tD7YI')
                 ->each(static function (Crawler $item) use ($url): Apartment_detailed {
                     //filtrujeme první tabulku
                     $data = $item->filter('div > section > div > div:nth-child(1) > table > tbody > tr')
@@ -155,19 +152,25 @@ $crawler = new Crawler($html);
                             }
                             if (strpos($line->text(), "Vybaveno") !== FALSE) {
                                 if (strpos($line->text(), "Částečně")){
-                                    $furniture = "Částečně";
+                                    $furniture = "částečně zařízený";
                                 }
                                 else if (strpos($line->text(), "Nevybaveno")){
-                                    $furniture = "Nevybaveno";
+                                    $furniture = "nezařízený";
                                 }
                                 else{
-                                    $furniture = "Vybaveno";
+                                    $furniture = "zařízeno";
                                 }
+
                                 return ["furniture" => $furniture];
                             }
                             if (strpos($line->text(), "Stav") !== FALSE) {
                                 $condition = $line->text();
-                                $condition = str_replace("Stav", "", $condition);
+                                if (strpos($condition, "Dobrý")){
+                                    $condition = "dobrý stav";
+                                }
+                                else{
+                                 $condition = str_replace("Stav", "", $condition); 
+                                }
                                 return ["condition" => $condition];
                             }
                             if (strpos($line->text(), "m²") !== FALSE && strpos($line->text(), "zahrádka") === FALSE && (strpos($line->text(), "Lodžie") === FALSE && strpos($line->text(), "Sklep") === FALSE && strpos($line->text(), "Terasa") === FALSE) && strpos($line->text(), "Balkón") === FALSE) {
@@ -203,20 +206,25 @@ $crawler = new Crawler($html);
                             }
                             if (strpos($line->text(), "Vybaveno") !== FALSE) {
                                 if (strpos($line->text(), "Částečně")){
-                                    $furniture = "Částečně";
+                                    $furniture = "částečně zařízený";
                                 }
                                 else if (strpos($line->text(), "Nevybaveno")){
-                                    $furniture = "Nevybaveno";
+                                    $furniture = "nezařízený";
                                 }
                                 else{
-                                    $furniture = "Vybaveno";
+                                    $furniture = "zařízeno";
                                 }
 
                                 return ["furniture" => $furniture];
                             }
                             if (strpos($line->text(), "Stav") !== FALSE) {
                                 $condition = $line->text();
-                                $condition = str_replace("Stav", "", $condition);
+                                if (strpos($condition, "Dobrý")){
+                                    $condition = "Dobrý";
+                                }
+                                else{
+                                 $condition = str_replace("Stav", "", $condition); 
+                                }
                                 return ["condition" => $condition];
                             }
                             if (strpos($line->text(), "m²") !== FALSE && strpos($line->text(), "zahrádka") === FALSE && (strpos($line->text(), "Lodžie") === FALSE && strpos($line->text(), "Sklep") === FALSE && strpos($line->text(), "Terasa") === FALSE) && strpos($line->text(), "Balkón") === FALSE) {
@@ -244,18 +252,19 @@ $crawler = new Crawler($html);
                             return NULL;
                         });
                     //přidáme fetchnutá data do pole, které obsahuje data obou tabulek
-                    $alldata = array_merge(...array_values(array_filter($data)),...array_values(array_filter($data2)));
-                    foreach ($alldata as $key => $value) {
+                        $alldata = array_merge(...array_values(array_filter($data)),...array_values(array_filter($data2)));
+                        foreach ($alldata as $key => $value) {
                         //pokud se hodnota nevrátila - např. ji zadavatel bytu nevyplnil, vrátíme prázdný string.
-                        if ($value == NULL){
-                            $alldata[$key] = "";
+                            if ($value == NULL){
+                                $alldata[$key] = "";
+                            }
                         }
-                    }
                     //vytvoříme nový apartment_detailed - byt s detaily
                     $ap_d =  new Apartment_detailed($url , $alldata["animals"] ?? NULL, $alldata["furniture"] ?? NULL, $alldata["elevator"] ?? NULL, $alldata["stairs"] ?? NULL, $alldata["condition"] ?? NULL, $alldata["size"] ?? NULL, $alldata["balcony"] ?? NULL, $alldata["area"] ?? NULL);
                     return $ap_d;
                 });
         }
+
         //vrátíme pole všech dat
         return array_merge(...$apartments_all);
     }

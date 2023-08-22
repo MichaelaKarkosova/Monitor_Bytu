@@ -26,9 +26,9 @@ class DeleteCommand extends Command {
         $datetime = (new DateTime($input->getArgument('datetimeModifier'), new DateTimeZone('UTC')))->format('Y-m-d H:i:s');
 
         //v DB smažeme vše, co je menší než datetime
-        $stmt = $this->db->getConnection()->prepare("delete from byty where imported < ?");
-        $stmt->bind_param("s", $datetime);
-        $stmt->execute();
+     //   $stmt = $this->db->getConnection()->prepare("delete from byty where imported < ?");
+      //  $stmt->bind_param("s", $datetime);
+       // $stmt->execute();
         return Command::SUCCESS;
     }
 
@@ -36,6 +36,6 @@ class DeleteCommand extends Command {
         //náš příkaz je app:clear
         $this->setName("app:clear");
         //a vyžaduje parametr
-        $this->addArgument('datetimeModifier', InputArgument::REQUIRED, "datetimeModifier");
+     //   $this->addArgument('datetimeModifier', InputArgument::REQUIRED, "datetimeModifier");
     }
 }

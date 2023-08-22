@@ -69,19 +69,19 @@ class DataWriter implements WriterInterface {
         //projdeme pole dat a vložíme vše do databáze
         foreach ($values as $v) {
             //úprava hodnot do jednoho stejného tvaru
-            if (strpos(strtolower($v), "dobrý") && !strpos(strtolower($v), "velmi")){
-                $v = "Dobrý";
+            if (strpos(strtolower($v->condition), "dobrý") && !strpos(strtolower($v->size), "velmi")){
+                $v->condition = "Dobrý";
             }
-            if (strpos($v, "dobrý stav")){
-                $v = "Dobrý";
+            if (strpos($v->condition, "dobrý stav")){
+                $v->condition= "Dobrý";
             }
-            if (strpos(strtolower($v), "atypick")){
-                $v = "Atypický";
+            if (strpos(strtolower($v->size), "atypick")){
+                $v->size = "Atypický";
             }
-            if (strpos(strtolower($v), "pokoj")){
-                $v = "Pokoj";
+            if (strpos(strtolower($v->size), "pokoj")){
+                $v->size= "Pokoj";
             }
-            if (strpos($v, "pokoj")) {
+            if (strpos($v->size, "pokoj")) {
                 $size = "Pokoj";
             }
             $db = $this->db->getConnection();
