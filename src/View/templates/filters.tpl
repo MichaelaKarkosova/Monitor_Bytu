@@ -31,30 +31,6 @@
                 </select>
                 <div class="list-group-item list-group-item-action py-3 lh-sm">
                     <div class="d-flex w-450 align-items-center justify-content-between">
-                        <strong class="mb-1">Zdroj</strong>
-                    </div>
-                    <div class="d-flex  p-2 flex-wrap mb-3">
-                    <select name="source" id="source">
-                      <option value = "" {if !isset($filters['source'])}selected="selected"{/if} >Nezáleží</option>
-                        {foreach $source as $f}
-                            {if $f.zdroj eq NULL or $f.zdroj eq "0"}
-                                {$f.zdroj = "Neuvedeno"}
-                            {/if}
-
-                            <div class="full">
-    
-                                <option value = "{$f.zdroj}" {if $filters['source'] eq "{$f.zdroj}"}selected="selected"{/if} >{$f.zdroj} ({$f.count})</option>
-                                <label for="zdroj_{$f.zdroj}">{$f.zdroj} ({$f.count})</label>
-                            </div>
-                        {/foreach}
-                        </select>
-                    </div>
-                </div>
-
-
-
-                <div class="list-group-item list-group-item-action py-3 lh-sm">
-                    <div class="d-flex w-450 align-items-center justify-content-between">
                         <strong class="mb-1">Část Prahy</strong>
                     </div>
                     <div class="d-flex  p-2 flex-wrap mb-3">
@@ -189,31 +165,6 @@
                         {/foreach}
                     </div>
                 </div>
-
-                                <div href="#" class="list-group-item list-group-item-action py-3 lh-sm">
-                    <div class="d-flex w-100 align-items-center justify-content-between">
-                        <strong class="mb-1">Balkon</strong>
-                    </div>
-                    <div class="col-10 mb-1">
-                        {foreach $balcony as $f}
-                            {if $f.balkon eq 1}
-                                {$f.balkon = "Ano"}
-                            {elseif $f.balkon eq "0"}
-                                {$f.balkon = "Ne"}
-                            {else}
-                                {$f.balkon = "Neuvedeno"}
-                            {/if}
-                            <div class="half">
-                                <input type="checkbox" id="balkon_{$f.balkon}" value="{$f.balkon}" {if isset($filters['balcony']) && in_array($f['balkon'], $filters['balcony'])}checked{/if} name="balcony[]">
-                                <label for="balkon_{$f.balkon}">{$f.balkon} ({$f.count})</label>
-                                {if isset($filters['balcony']) && in_array(rawurlencode($f['balkon']), ($filters['balcony']))}
-                                {/if}
-
-                            </div>
-                        {/foreach}
-                    </div>
-                </div>
-
                  <div href="#" class="list-group-item list-group-item-action py-3 lh-sm">
                     <div class="d-flex w-100 align-items-center justify-content-between">
                         <strong class="mb-1">Zvířata</strong>

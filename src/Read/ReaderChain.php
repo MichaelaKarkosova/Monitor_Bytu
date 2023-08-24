@@ -3,7 +3,7 @@
 namespace App\Read;
 
 use App\Read\ReaderInterface;
-use App\ValueObject\ApartmentsResult;
+use App\ValueObject\JobsResult;
 use RuntimeException;
 
 //chain rozhoduje, odkud se bude číst podle url.
@@ -17,7 +17,7 @@ class ReaderChain implements ReaderInterface {
     }
 
     //při spuštění read se spouští reader
-    public function read(string $source) : ApartmentsResult {
+    public function read(string $source) : JobsResult {
         //projde všechny ready, které jsme registrovaly v commandu.
         foreach ($this->readers as $reader) {
             //zkontroluje, zda z url lze číst - resp. zda obsahuje část url patřící k readeru

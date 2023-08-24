@@ -3,7 +3,7 @@
 namespace App\Command;
 
 use App\Database;
-use App\Notification\ApartmentsNotifierInterface;
+use App\Notification\JobsNotifierInterface;
 use DateTime;
 use DateTimeZone;
 use Symfony\Component\Console\Command\Command;

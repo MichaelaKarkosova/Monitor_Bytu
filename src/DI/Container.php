@@ -3,18 +3,19 @@
 namespace App\DI;
 
 use App\Command\DeleteCommand;
-use App\Read\BezRealitkyReader;
+use App\Read\JobsCZReader;
+use App\Read\StartupJobsReader;
 use App\Database;
 use App\DataRenderer;
 use App\Template\ColorMode;
 use App\Write\DataWriter;
-use App\Notification\DiscordApartmentsNotifier;
-use App\Read\idnesReader;
-use App\Notification\NullApartmentsNotifier;
+use App\Notification\DiscordJobsNotifier;
+use App\Read\PraceCZReader;
+use App\Notification\NullJobsNotifier;
 use App\Read\ReaderChain;
 use App\WebApp;
 use App\Command\ReadCommand;
-use App\Notification\ApartmentsNotifierInterface;
+use App\Notification\JobsNotifierInterface;
 use App\Read\ReaderInterface;
 use App\Template\TemplateFactoryInterface;
 use RuntimeException;
@@ -63,12 +64,12 @@ class Container {
         return $this->services['template_factory'] = new SmartyTemplateFactory();
     }
 
-    public function getApartmentsNotifier() : ApartmentsNotifierInterface {
-        if (isset($this->services['apartments_notifier'])) {
-            return $this->services['apartments_notifier'];
+    public function getJobsNotifier() : JobsNotifierInterface {
+        if (isset($this->services['jobs_notifier'])) {
+            return $this->services['jobs_notifier'];
         }
         $webhookUrl = $this->getParam("discordWebhookUrl");
-        return $this->services['apartments_notifier'] = !empty($webhookUrl) ? new DiscordApartmentsNotifier($webhookUrl) : new NullApartmentsNotifier();
+        return $this->services['jobs_notifier'] = !empty($webhookUrl) ? new DiscordJobsNotifier($webhookUrl) : new NullJobsNotifier();
     }
 
     public function getWriter(): DataWriter {
@@ -78,7 +79,7 @@ class Container {
 
         return $this->services['writer'] = new DataWriter(
             $this->getConnection(),
-            $this->getApartmentsNotifier(),
+            $this->getJobsNotifier(),
         );
     }
 
@@ -121,26 +122,35 @@ class Container {
         }
 
         return $this->services['reader'] = new ReaderChain([
-            $this->getIdnesReader(),
-            $this->getBezRealitkyReader(),
+            $this->getJobsCZReader(),
+            $this->getStartupJobsReader(),
         ]);
     }
 
-    private function getIdnesReader(): idnesReader {
-        if (isset($this->services['reader.idnes'])) {
-            return $this->services['reader.idnes'];
+    private function getJobsCZReader(): JobsCZReader {
+        if (isset($this->services['reader.jobscz'])) {
+            return $this->services['reader.jobscz'];
         }
 
-        return $this->services['reader.idnes'] = new IdnesReader($this->getConnection());
+        return $this->services['reader.jobscz'] = new JobsCZReader($this->getConnection());
     }
 
-    private function getBezRealitkyReader(): BezRealitkyReader {
-        if (isset($this->services['reader.bez_realitky'])) {
-            return $this->services['reader.bez_realitky'];
+    private function getStartupJobsReader(): StartupJobsReader {
+        if (isset($this->services['reader.startupjobs'])) {
+            return $this->services['reader.startupjobs'];
         }
 
-        return $this->services['reader.bez_realitky'] = new BezRealitkyReader($this->getConnection());
+        return $this->services['reader.startupjobs'] = new StartupJobsReader($this->getConnection());
     }
+
+    private function getPraceCZReader(): PraceCZReader {
+        if (isset($this->services['reader.praceCZ'])) {
+            return $this->services['reader.praceCZ'];
+        }
+
+        return $this->services['reader.praceCZ'] = new PraceCZReader($this->getConnection());
+    }
+
 
     private function getParam(string $name) {
         if (!array_key_exists($name, $this->parameters)) {

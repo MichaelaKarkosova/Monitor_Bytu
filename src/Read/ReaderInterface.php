@@ -2,9 +2,9 @@
 
 namespace App\Read;
 
-use App\ValueObject\ApartmentsResult;
+use App\ValueObject\JobsResult;
 
 interface ReaderInterface {
-    public function read(string $source): ApartmentsResult;
+    public function read(string $source): JobsResult;
     public function getDetails(): array;
 }

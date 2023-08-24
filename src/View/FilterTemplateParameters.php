@@ -17,15 +17,13 @@ final class FilterTemplateParameters extends TemplateParameters {
 
     public array $animals;
 
-    public array $source;
-    
     public array $balcony;
 
     public array $elevator;
 
     public int $sum;
 
-    public array $furniture;
+    public string $furniture;
 
     public string $order;
 }

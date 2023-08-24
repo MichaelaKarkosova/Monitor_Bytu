@@ -3,24 +3,26 @@
 namespace App\Write;
 
 use App\Database;
-use App\Notification\ApartmentsNotifierInterface;
-use App\ValueObject\ApartmentsResult;
+use App\Notification\JobsNotifierInterface;
+use App\ValueObject\JobsResult;
 use DateTime;
 use DateTimeZone;
 
 class DataWriter implements WriterInterface {
 
     protected Database $db;
-    private ApartmentsNotifierInterface $apartmentsNotifier;
+    private JobsNotifierInterface $apartmentsNotifier;
 
-    public function __construct(Database $db, ApartmentsNotifierInterface $apartmentsNotifier){
+    public function __construct(Database $db, JobsNotifierInterface $apartmentsNotifier){
        $this->db = $db;
        $this->apartmentsNotifier = $apartmentsNotifier;
     }
 
     ///zapisujeme data do databáze
-    public function write(ApartmentsResult $reader): void {
+    public function write(JobsResult $reader): void {
+        echo "Writing apartments...";
         $newUrls = [];
+
         $foundUrls = [];
         $imported = (new DateTime('now', new DateTimeZone('UTC')))->format('Y-m-d H:i:s');
         $data = [];
@@ -30,6 +32,9 @@ class DataWriter implements WriterInterface {
         $existing = array_column($existingg, "url");
         //projdeme všechny byty v databázi
         foreach ($reader->apartments as $index => $apartment) {
+//if (strpos($apartment, "pronajem") && strpos($apartment->part, "Praha") && $reader->type == "bezrealitky"){
+            echo "flats: ";
+            print_r($apartment);
             //přepíšeme index na url
             $data[$apartment->url] = $apartment;
             //kontrola, jestli to už v databázi neexistuje
@@ -38,6 +43,7 @@ class DataWriter implements WriterInterface {
             $stmt->bind_param("s", $apartment->id);
             $stmt->execute();
             $stmt->store_result();
+
             //pokud byt existuje v databázi, provedeme update včetně novéhoi imported času. Pokud ne, vložíme ho.
             if ($existing != null && in_array($apartment->id, $existing)) {
                 $bindparams = [$apartment->id, $apartment->name, $apartment->url, $apartment->price, $apartment->pricetotal, $apartment->part, $apartment->longpart, $imported, $apartment->id];
@@ -62,20 +68,24 @@ class DataWriter implements WriterInterface {
         if (count($newUrls) > 0){
             $this->apartmentsNotifier->notify($newUrls);
         }
+   // }
     }
 
     //zde zapíšeme detaily do databáze - přijdou sem detaily jednoho bytu
     public function WriteDetails(array $values): void {
+        echo "Writing details...";
         //projdeme pole dat a vložíme vše do databáze
         foreach ($values as $v) {
+            echo "details: $v->id";
+        if ($v->area > 3 && $v->area < 300) {
             //úprava hodnot do jednoho stejného tvaru
             if (strpos(strtolower($v->condition), "dobrý") && !strpos(strtolower($v->size), "velmi")){
                 $v->condition = "Dobrý";
             }
-            if (strpos($v->condition, "dobrý stav")){
+            if (strpos($v->condition, "dobrý")){
                 $v->condition= "Dobrý";
             }
-            if (strpos(strtolower($v->size), "atypick")){
+            if (strpos(strtolower($v->size), "atypic")){
                 $v->size = "Atypický";
             }
             if (strpos(strtolower($v->size), "pokoj")){
@@ -89,6 +99,7 @@ class DataWriter implements WriterInterface {
             $stmt = $db->prepare($sql);
             $stmt->bind_param("sssisssis", ...array_values((array) $v));
             $stmt->execute();
+        }
         }
     }
 
