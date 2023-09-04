@@ -96,6 +96,23 @@ class DataRenderer {
     return $activefilters;
 }
 
+    public function getAvailableSources(){
+        $db = $this->db->getConnection();
+        $sources = ['bezrealitky', 'idnes', 'realitymix'];
+        $allsources = [];
+        foreach ($sources as $s){
+            $sql = 'select count(*) from byty_detaily where byty_id like "%'.$s.'%"';
+             $stmt = $db->prepare($sql);
+            $stmt->execute();
+        //a fetchneme všechny výsledky
+            $resultt = $stmt->get_result();
+            $count = $resultt->fetch_row();
+            $result = array(['count' => $count[0], 'zdroj' => $s]);
+            $allsources = array_merge($allsources, $result);
+        }
+
+        return $allsources;
+    }
 
     public function LoadDataForSmarty() : void {
         $db_c = $this->db->getConnection();
@@ -123,12 +140,13 @@ class DataRenderer {
         //vytáhneme z výpisu bytů informaci o stavu bytů a předáme ji do templatu jako parametr "stav"
         $templateParams->sizes = $this->getDataFromDb("dispozice", 1);
         //vytáhneme z výpisu bytů informaci o tom, zda v bytu mohou být zvířata a předáme ji do templatu jako parametr "animals"
+        $templateParams->source = $this->getAvailableSources();
         $templateParams->furniture = $this->getDataFromDb("vybaveni", 1);
         $templateParams->animals = $this->getDataFromDb("zvirata", 1);
         $templateParams->imported = $this->getDataFromDb("DATE_ADD(imported,interval 2 hour)", 0);
         //vytáhneme z výpisu bytů informaci o přítomnosti balkonu a předáme ji do templatu jako parametr "balcony"
         $templateParams->balcony = $this->getDataFromDb("balkon", 1);
-                $templateParams->count= $countall;
+        $templateParams->count= $countall;
         //vytáhneme z výpisu bytů informaci o přítomnosti výtahu a předáme ji do templatu jako parametr "elevator"
         $templateParams->elevator = $this->getDataFromDb("vytah", 1);
         //vybereme počet detailů a předáme ho do templatu jako parametr "sum"
@@ -143,9 +161,9 @@ class DataRenderer {
         $templateParams->http = $http;
         //vytvoříme šablonu a vyrenderujeme ji
         $this->templateFactory->create('index.tpl', $templateParams)->render();
-        $apartmentsparams = new JobsTemplateParameters();
+        $apartmentsparams = new ApartmentsTemplateParameters();
         $apartmentsparams->count = $countall;
-                $this->templateFactory->create('apartments.tpl', $apartmentsparams)->render();
+        $this->templateFactory->create('apartments.tpl', $apartmentsparams)->render();
     }
 
     public function getColorMode() : string{
@@ -177,10 +195,7 @@ class DataRenderer {
             //nastavíme where podmínku pomocí všech podmínek
             $where = empty($conditions) ? '' : ('WHERE ' . implode(' AND ', $conditions));
             $sql = "select b.id, b.longpart, b.part, bd.balkon, b.pricetotal, b.part, bd.dispozice, bd.vymera, bd.zvirata, bd.patro, bd.vybaveni, bd.vytah, bd.stav, b.price, b.url, b.name, b.imported from byty b join byty_detaily bd on bd.byty_id=b.id " . $where . " order by " . $order_s . $limit;
-   
-            //echo $sql;
             }
-           // echo $sql;
          else {
              $sql = "select b.id, b.part, b.longpart, b.pricetotal, bd.balkon, b.part, bd.dispozice, bd.vymera, bd.zvirata, bd.patro, bd.vybaveni, bd.vytah, bd.stav, b.price, b.url, b.name, b.imported from byty b join byty_detaily bd on bd.byty_id=b.id order by pricetotal". $limit;
          }
@@ -352,8 +367,12 @@ class DataRenderer {
                 $conditions[] = '(' . implode(' OR ', $innerConditions) . ')';
             }
         }
-
-
+    
+        if (isset($filters['source'])) {
+                $conditions[] = 'INSTR(url, ?)';
+                $params[] = $filters['source'];
+                $binds[] = "s";
+        }
         if (isset($filters['stav']) && !empty($filters['stav'])) {
             $innerValue = $filters['stav'];
             $innerConditions = [];
@@ -464,7 +483,6 @@ class DataRenderer {
                 $conditions[] = '(' . implode(' OR ', $innerConditions) . ')';
             }
         }
-        print_r($c);
         if (isset($filters['furniture']) && !empty($filters['furniture'])) {
             $innerValue = $filters['furniture'];
             $innerConditions = [];
@@ -483,6 +501,7 @@ class DataRenderer {
                 $conditions[] = '(' . implode(' OR ', $innerConditions) . ')';
             }
         }
+
         return [$conditions, $binds, $params];
 
     }

@@ -39,7 +39,16 @@ class RealityMixReader implements ChainableReaderInterface {
             $html = str_replace('li class="rmix-acquisition-banner"', "", $html);
             $html = str_replace("li style=", "", $html);
                 //vytvoříme nový crawler, který nám pomůže data získat
-            $crawler = new Crawler($html);
+                 $client = new \GuzzleHttp\Client(['headers' => [
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
+                'Accept-Language' => 'en-US,en;q=0.9',
+                'Accept-Encoding' => 'gzip, deflate, br',
+                'Referer' => $source,
+                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'],
+                ]);
+                $request = $client->get($source);
+                $html = (string) $request->getBody();
+                $crawler = new Crawler($html);
 
             //pokud je vše ok, vytvoříme crawler filter najednotlivé "dlaždice" bytů
             $ok = 0 == $crawler->filter('.alert--info')->count();

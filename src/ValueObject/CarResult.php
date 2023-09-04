@@ -2,7 +2,7 @@
 
 namespace App\ValueObject;
 
-class JobsResult {
+class ApartmentsResult {
     public string $type;
 
     public array $apartments;

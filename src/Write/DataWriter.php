@@ -3,23 +3,23 @@
 namespace App\Write;
 
 use App\Database;
-use App\Notification\JobsNotifierInterface;
-use App\ValueObject\JobsResult;
+use App\Notification\ApartmentsNotifierInterface;
+use App\ValueObject\ApartmentsResult;
 use DateTime;
 use DateTimeZone;
 
 class DataWriter implements WriterInterface {
 
     protected Database $db;
-    private JobsNotifierInterface $apartmentsNotifier;
+    private ApartmentsNotifierInterface $apartmentsNotifier;
 
-    public function __construct(Database $db, JobsNotifierInterface $apartmentsNotifier){
+    public function __construct(Database $db, ApartmentsNotifierInterface $apartmentsNotifier){
        $this->db = $db;
        $this->apartmentsNotifier = $apartmentsNotifier;
     }
 
     ///zapisujeme data do databáze
-    public function write(JobsResult $reader): void {
+    public function write(ApartmentsResult $reader): void {
         echo "Writing apartments...";
         $newUrls = [];
 
@@ -60,6 +60,8 @@ class DataWriter implements WriterInterface {
                 $stmt2->execute();
                 //přidáme do pole nových bytů
                 $newUrls[] = $apartment->id;
+                //zapíšeme cenu
+                $this->writePrice($apartment->url, $apartment->price, $apartment->pricetotal, $apartment->part, $imported);
             }
             //přidáme do pole všech bytů
             $foundUrls[] = $apartment->id;
@@ -79,7 +81,7 @@ class DataWriter implements WriterInterface {
             echo "details: $v->id";
         if ($v->area > 3 && $v->area < 300) {
             //úprava hodnot do jednoho stejného tvaru
-            if (strpos(strtolower($v->condition), "dobrý") && !strpos(strtolower($v->size), "velmi")){
+            if (strpos(strtolower($v->condition), "dobrý") && !strpos(strtolower($v->condition), "velmi")){
                 $v->condition = "Dobrý";
             }
             if (strpos($v->condition, "dobrý")){
@@ -101,6 +103,13 @@ class DataWriter implements WriterInterface {
             $stmt->execute();
         }
         }
+    }
+    public function writePrice(string $url, ?int $price, ?int $pricetotal, ?string $part, string $date){
+        $db = $this->db->getConnection();
+        $sql = "insert into ceny(url, price, pricetotal, part, date) values (?, ?, ?, ?, ?)";
+        $stmt = $db->prepare($sql);
+        $stmt->bind_param("siiss", $url, $price, $pricetotal, $part, $date);
+        $stmt->execute();
     }
 
 }

@@ -2,12 +2,12 @@
 
 namespace App\Command;
 
-use App\Read\StartupJobsReader;
+use App\Read\BezRealitkyReader;
 use App\Database;
-use App\Read\PraceCZReader;
+use App\Read\idnesReader;
 use App\Read\ReaderChain;
 use App\Read\ReaderInterface;
-use App\Read\JobsCZReader;
+use App\Read\RealityMixReader;
 use App\Write\WriterInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -39,9 +39,9 @@ class ReadCommand extends Command  {
         }
         //vytvoříme chain readerů
         $reader = new ReaderChain([
-            new PraceCZReader($this->db),
-            new StartupJobsReader($this->db),
-            new JobsCZReader($this->db)
+            new idnesReader($this->db),
+            new BezRealitkyReader($this->db),
+            new RealityMixReader($this->db)
         ]);
         //result spouští read na argument v příkazu - url na stránku s byty
         $result = $reader->read($input->getArgument('arg'));

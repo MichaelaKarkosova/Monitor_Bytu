@@ -1,15 +1,15 @@
 <?php
 namespace App\Write;
 
-use App\ValueObject\Job;
-use App\ValueObject\JobsResult;
+use App\ValueObject\apartment;
+use App\ValueObject\ApartmentsResult;
 
 interface WriterInterface {
     /**
-     * @param Job[] $products
+     * @param apartment[] $products
      * @return void
      */
-    public function write(JobsResult $reader): void;
+    public function write(ApartmentsResult $reader): void;
     public function writeDetails(array $details): void;
 
 }
