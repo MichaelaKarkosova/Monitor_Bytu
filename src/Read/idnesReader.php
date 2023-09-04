@@ -12,7 +12,7 @@ use App\ValueObject\ApartmentsResult;
 use Nette\Utils\Json;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpClient\HttpClient;
-use GuzzleHttp\Client;
+use Goutte\Client;
 
 
 class idnesReader implements ChainableReaderInterface
@@ -37,27 +37,24 @@ class idnesReader implements ChainableReaderInterface
         $finalapartments = [];
         do {
             //sleep nám pomáhá získat data tak, aby nedošlo k timeoutu ze strany idnesu
-            sleep(20);
+            sleep(15);
             //vytáhneme obsah webu
-            $proxylist = "https://www.sslproxies.org/";
-            $proxies= file_get_contents($proxylist);
-            $ip = '198.59.191.234:8080';
-            $aContext = array(
-            'https' => array(
-                'proxy' => 'tcp://'.$ip,
-                'request_fulluri' => false,
-                ),
-            );
-             $client = new \GuzzleHttp\Client(['headers' => [
-            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
-            'Accept-Language' => 'en-US,en;q=0.9',
-            'Accept-Encoding' => 'gzip, deflate, br',
-            'Referer' => $source,
-            'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'],
+            try{
+                 $client = new \GuzzleHttp\Client(['headers' => [
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
+                'Accept-Language' => 'en-US,en;q=0.9',
+                'Accept-Encoding' => 'gzip, deflate, br',
+                'Referer' => $source,
+                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'],
                 ]);
-            $request = $client->get($source);
-            $html = (string) $request->getBody();
-            $crawler = new Crawler($html);
+                }
+            catch (exception $e){
+                echo $e;
+            }
+
+                $request = $client->get($source);
+                $html = (string) $request->getBody();
+                $crawler = new Crawler($html);
             //projdeme všechny dlaždice s byty a jednotlivé prvky v nich
             $apartments = $crawler->filter('.c-products__list .c-products__item article a.c-products__link')
                 ->each(static function (Crawler $item) use ($source): apartment {
@@ -105,7 +102,8 @@ class idnesReader implements ChainableReaderInterface
 
 
     //v této metodě získáváme detaily bytů
-    public function getDetails(): array {
+    public function getDetails(): array
+    {
         $appartments_d = [];
         $db = $this->db->getConnection();
         //vytáhneme všechny idnes adresy na detaily z databáze
@@ -118,17 +116,8 @@ class idnesReader implements ChainableReaderInterface
             }
             $url = $a['url'];
             //vytvoříme crawler na url z databáze
-            $client = new \GuzzleHttp\Client(['headers' => [
-            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
-            'Accept-Language' => 'en-US,en;q=0.9',
-            'Accept-Encoding' => 'gzip, deflate, br',
-            'Referer' => $url,
-            'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'],
-                ]);
-
-            $request = $client->get($a['url']);
-            $html = (string) $request->getBody();
-            $crawler = new Crawler($html);
+            $crawler = new Crawler(file_get_contents($a['url']));
+            //
             $size = $crawler->filter('header.b-detail .b-detail__title')->text("");
             //Na idnesu se uvádí dispozice bytu v nadpise. Nadpis tedy rozdělíme na jednotlivé informace.
             $sizesplitted = explode(" ", $size);
@@ -168,12 +157,6 @@ class idnesReader implements ChainableReaderInterface
             $stairs = $attributes['Podlaží'] ?? NULL;
             $furniture = $attributes['Vybavení'] ?? NULL;
             $area = $attributes['Užitná plocha'] ?? NULL;
-            if (strpos($condition,"dobrý stav")){
-                $condition = "Dobrý";
-            }
-            if (strpos($condition," špatný stav")){
-                $condition = "Špatný";
-            }
             //ve výměře uděláme replace měrné jednotky m² a všech znaků, co nejsou čísla
             $area = str_replace("m²", "", $area);
             $area = str_replace("m2", "", $area);
@@ -205,6 +188,14 @@ class idnesReader implements ChainableReaderInterface
                 if (strpos($poznamka, "ne") - strpos($poznamka, "zvířata") < 20) {
                     $animals = 0;
                 }
+            }
+            if (strpos($poznamka, "bez") && strpos($poznamka, "zvířat")) {
+                if (strpos($poznamka, "bez") - strpos($poznamka, "zvířat") < 20) {
+                    $animals = 0;
+                }
+            }
+            if (strpos($condition, "dobrý stav")){
+                $condition = "Dobrý";
             }
             $stairs = strstr($stairs, '(', true);
             $stairs = preg_replace('/\D+/', "", $stairs);

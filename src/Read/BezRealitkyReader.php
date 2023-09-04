@@ -212,7 +212,7 @@ class BezRealitkyReader implements ChainableReaderInterface {
                                     $furniture = "nezařízený";
                                 }
                                 else{
-                                    $furniture = "zařízeno";
+                                    $furniture = "zařízený";
                                 }
 
                                 return ["furniture" => $furniture];
@@ -220,6 +220,9 @@ class BezRealitkyReader implements ChainableReaderInterface {
                             if (strpos($line->text(), "Stav") !== FALSE) {
                                 $condition = $line->text();
                                 if (strpos($condition, "Dobrý")){
+                                    $condition = "Dobrý";
+                                }
+                                if (strpos($condition, "dobrý")){
                                     $condition = "Dobrý";
                                 }
                                 else{
@@ -267,6 +270,12 @@ class BezRealitkyReader implements ChainableReaderInterface {
 
         //vrátíme pole všech dat
         return array_merge(...$apartments_all);
+    }
+
+    public function writePrice(){
+
+
+
     }
 
 }
