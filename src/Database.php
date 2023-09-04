@@ -15,7 +15,7 @@ class Database {
 
     // mysqli je by default NULL, vytvoří se automaticky až s prvním dotazem
     private ?mysqli $connection = NULL;
- 
+
     /**
      * @param string $host
      * @param string $user
