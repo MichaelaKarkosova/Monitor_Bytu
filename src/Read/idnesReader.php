@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Read;
 
 use App\database;
@@ -37,7 +39,7 @@ class idnesReader implements ChainableReaderInterface
         $finalapartments = [];
         do {
             //sleep nám pomáhá získat data tak, aby nedošlo k timeoutu ze strany idnesu
-            sleep(15);
+           sleep(15);
             //vytáhneme obsah webu
             try{
                  $client = new \GuzzleHttp\Client(['headers' => [
@@ -86,7 +88,7 @@ class idnesReader implements ChainableReaderInterface
                     //vyfiltrujeme nadpis.
                     $title = $item->filter('.c-products__title')->text();
                     //vytvoříme nový objekt Apartment a vrátíme ho v annonymní funkci
-                    $a = new Apartment($href, $title, $href, 0, $price, $finalpart, $longpart);
+                    $a = new Apartment($href, $title, $href, 0, (int) $price, $finalpart, $longpart);
                     return $a;
                 });
             //spojíme všechny vrácené objekty do jednoho pole
@@ -194,13 +196,12 @@ class idnesReader implements ChainableReaderInterface
                     $animals = 0;
                 }
             }
-            if (strpos($condition, "dobrý stav")){
-                $condition = "Dobrý";
+            if ($stairs > 0){
+                $stairs = strstr($stairs, '(', true);
+                $stairs = (int) preg_replace('/\D+/', "", $stairs);
             }
-            $stairs = strstr($stairs, '(', true);
-            $stairs = preg_replace('/\D+/', "", $stairs);
             //vytvoříme nový objekt a přidáme ho do pole detailů
-            $thisapartment = new Apartment_detailed($url, $animals ?? NULL, $furniture ?? NULL, $elevator ?? NULL, (int)$stairs ?? NULL, $condition ?? NULL, $size ?? NULL, $balcony ?? NULL, (int)$area ?? NULL);
+            $thisapartment = new Apartment_detailed($url, (bool) $animals ?? NULL, $furniture ?? NULL, (bool) $elevator ?? NULL, (int) $stairs ?? NULL, $condition ?? NULL, $size ?? NULL, (bool) $balcony ?? NULL, (int) $area ?? NULL);
             $appartments_d[] = $thisapartment;
         }
         //a celé pole vrátíme

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\ValueObject;
 
 
@@ -14,7 +16,7 @@ class Apartment_detailed {
 
     public ?float $pricetotal;
 
-    public ?string $animals;
+    public ?bool $animals;
 
     public ?string $furniture;
 
@@ -26,13 +28,13 @@ class Apartment_detailed {
 
     public ?string $size;
 
-    public ?string $balcony;
+    public ?bool $balcony;
 
     public ?float $area;
 
-    public ?string $elevator;
+    public ?bool $elevator;
 
-    public function __construct(string $id, ?string $animals, ?string $furniture, ?string $elevator, ?int $stairs, ?string $condition, ?string $size, ?string $balcony, ?int $area)
+    public function __construct(string $id, ?bool $animals, ?string $furniture, ?bool $elevator, ?int $stairs, ?string $condition, ?string $size, ?bool $balcony, ?int $area)
     {
         $this->id = $id;
         $this->animals = $animals;

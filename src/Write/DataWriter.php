@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Write;
 
@@ -33,8 +34,8 @@ class DataWriter implements WriterInterface {
         //projdeme všechny byty v databázi
         foreach ($reader->apartments as $index => $apartment) {
 //if (strpos($apartment, "pronajem") && strpos($apartment->part, "Praha") && $reader->type == "bezrealitky"){
-            echo "flats: ";
-            print_r($apartment);
+            //echo "flats: ";
+            //print_r($apartment);
             //přepíšeme index na url
             $data[$apartment->url] = $apartment;
             //kontrola, jestli to už v databázi neexistuje
@@ -78,33 +79,33 @@ class DataWriter implements WriterInterface {
         echo "Writing details...";
         //projdeme pole dat a vložíme vše do databáze
         foreach ($values as $v) {
-            echo "details: $v->id";
+      //      echo "details: $v->id";
+            //var_export($v->id);
         if ($v->area > 3 && $v->area < 300) {
             //úprava hodnot do jednoho stejného tvaru
-            if (strpos(strtolower($v->condition), "dobrý") && !strpos(strtolower($v->condition), "velmi")){
-                $v->condition = "Dobrý";
+            if ($v->condition){
+                if (strpos(strtolower($v->condition), "dobrý")){
+                    $v->condition = "Dobrý";
+                }
             }
-            if (strpos($v->condition, "dobrý")){
-                $v->condition= "Dobrý";
-            }
-            if (strpos(strtolower($v->size), "atypic")){
-                $v->size = "Atypický";
-            }
-            if (strpos(strtolower($v->size), "pokoj")){
-                $v->size= "Pokoj";
-            }
-            if (strpos($v->size, "pokoj")) {
-                $size = "Pokoj";
+            if ($v->size){
+                if (strpos(strtolower($v->size), "atypic")){
+                    $v->size = "Atypický";
+                }
+                if (strpos(strtolower($v->size), "pokoj")){
+                    $v->size= "Pokoj";
+                }
             }
             $db = $this->db->getConnection();
             $sql = "insert IGNORE into byty_detaily (byty_id, zvirata, vybaveni, patro, stav, dispozice, balkon, vymera, vytah) values (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $db->prepare($sql);
             $stmt->bind_param("sssisssis", ...array_values((array) $v));
+            //var_export($v);
             $stmt->execute();
         }
         }
     }
-    public function writePrice(string $url, ?int $price, ?int $pricetotal, ?string $part, string $date){
+    public function writePrice(string $url, ?float $price, ?float $pricetotal, ?string $part, string $date){
         $db = $this->db->getConnection();
         $sql = "insert into ceny(url, price, pricetotal, part, date) values (?, ?, ?, ?, ?)";
         $stmt = $db->prepare($sql);

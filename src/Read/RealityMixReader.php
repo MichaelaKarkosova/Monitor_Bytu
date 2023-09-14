@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Read;
 
 use App\database;
@@ -51,16 +54,21 @@ class RealityMixReader implements ChainableReaderInterface {
                 $crawler = new Crawler($html);
 
             //pokud je vše ok, vytvoříme crawler filter najednotlivé "dlaždice" bytů
-            $ok = 0 == $crawler->filter('.alert--info')->count();
-            if ($ok) {
-              echo "OK: $ok";
+          //  $ok = 0 == $crawler->filter('.alert--info')->count();
+            $ok = $crawler->filter('.paginator__list-item--disabled')->count() > 0;
+            //if ($ok) {
+             // echo "OK: $ok";
                 //projedeme jednotlivé byty ve filteru
-                $apartments = $crawler->filter('.advert-list-items__items li')
+             /// print_r($crawler->filter('.paginator__list-item--disabled')->count()." ");
+                $apartments = $crawler->filter('.advert-item__content-data')
                     ->each(static function (Crawler $item) {
+                    //    print_r($item);
+
                          //vytáhneme cenu bytu
-                         $rent = $item->filter(".advert-list-items__content-price")->text();
+                         $rent = $item->filter("div.text-xl.font-extrabold")->text();
+                         print_r($rent);
                          //vytáhneme část prahy
-                         $part = $item->filter(".advert-list-items__content-address")->text();
+                         $part = $item->filter(".advert-item__content-data > div > p")->text();
                          $name = $item->filter('h2')->text();
                          $longpart = $part;
                          //vytáhneme odkaz na stránku s podobným výpisem informací o bytu
@@ -73,12 +81,12 @@ class RealityMixReader implements ChainableReaderInterface {
                          $prices = explode("Kč", $prices);
                          //u obou cen replacneme mezery - např z 15 000 uděláme 150000 a získáme tak číslo
                          $prices[0] = preg_replace('/\D+/', "", $prices[0]);
-                         $prices[1] = preg_replace('/\D+/', "", $prices[1]);
+                        // $prices[1] = preg_replace('/\D+/', "", $prices[1]);
                          $rent = is_numeric($prices[0]) ? (int) $prices[0] : NULL;
                          if ($rent === NULL) {
                             return NULL;
                          }
-                         $finalprice = (int)($prices[0]) + (int)($prices[1]);
+                         $finalprice = $rent;
                          //cena nájmu bez poplatků
                          $rent = (int)($prices[0]);
                         //upravíme part z formátu Praha x, část na Praha x - část.
@@ -98,7 +106,8 @@ class RealityMixReader implements ChainableReaderInterface {
                          $finalpart = str_replace("Praha - ", "", $finalpart);
                          $finalpart = str_replace(", okres Praha", "", $finalpart);
                          //vrátíme object Apartment
-                         $a = new Apartment($href, $name, $href, 0, $finalprice, $finalpart, $longpart);
+                         $a = new Apartment($href, $name, $href, $rent, $finalprice, $finalpart, $longpart);
+                       //  print_r($a);
                          return $a;
                     });
                 $i++;
@@ -107,7 +116,7 @@ class RealityMixReader implements ChainableReaderInterface {
                 $source = $nextpage;
                 //zkopírujeme obsah bytů na aktuální stránce do pole $finalapartments, kde se nachází všechny byty ze všech stránek.
                 $finalapartments = array_merge($finalapartments, $apartments);
-            }
+            //}
         }
         while($ok);
         //vrátíme, o který reader se jednalo
@@ -122,65 +131,53 @@ class RealityMixReader implements ChainableReaderInterface {
         //vybereme jen byty ze zdroje realitymix
         $allapartments = $db->query("select url, imported from byty where url like '%realitymix%'")->fetch_all(MYSQLI_ASSOC);
         //projdeme všechny byty z databáze
+        //print_r($allapartments);
         foreach ($allapartments as $a) {
             //vytáhneme data z url detailu bytu
             $crawler = new Crawler(file_get_contents($a["url"]));
             $url= $a["url"];
             $apartments_all[] = $crawler->filter('.advert-layout__information-wrapper')
-                ->each(static function (Crawler $item) use ($url): Apartment_detailed {
+                ->each(function (Crawler $item) use ($url): Apartment_detailed {
                     //uložíme si poznámku
-                    $poznamka = $item->filter("div:nth-child(1) > div")->text();
+                    $poznamka = $item->filter("div > div")->text();
+                        
                     //projdeme všechny <li> tagy az  nich vytáhneme data - první tabulka
                     $data = $item->filter('div:nth-child(3) > div > ul > li')
-                        ->each(static function (Crawler $line) : ?array {
-                            if (strpos($line->text(), "Číslo podlaží v domě: ") !== FALSE) {
-                                $stairs = $line->text();
-                                $stairs = str_replace("Počet podlaží objektu: ", "", $stairs);
-                                return ["stairs" => $stairs];
-                            }
-                            if (strpos($line->text(), "Dispozice bytu: ") !== FALSE) {
-                                $size = $line->text();
-                                $size = str_replace("Dispozice bytu: ", "", $size);
-                                if (strpos($size, "atypické") && strpos($size, "atypický")){
-                                    $size = "Atypický";
-                                }
-                                return ["size" => $size];
-                            }
-                            if (strpos($line->text(), "Stav objektu") !== FALSE) {
-                                $condition = $line->text();
-                                $condition = str_replace("Stav objektu: ", "", $condition);
-                                return ["condition" => $condition];
-                            }
-                            if (strpos($line->text(), "Celková podlahová plocha: ") !== FALSE) {
-                                $area = $line->text();
-                                $area = preg_replace('/\D+/', "", $area);
-                                return ["area" => $area];
-                            }
-                            if (strpos($line->text(), "Balkón")  !== FALSE) {
-                                $balcony = true;
-                                //u balkonu může být údaj o velikosti - např. 5m2. To náš ale nezajímá, regexem to replacneme.
-                                $balcony = preg_replace('/\D+/', "", $balcony);
-                                return ["balcony" => $balcony];
-                            }
-                            if (strpos($line->text(), "Výtah")  !== FALSE) {
-                                $elevator = true;
-                                $elevator = preg_replace('/\D+/', "", $elevator);
-                                return ["elevator" => $elevator];
-                            }
-
-                            if (strpos($line->text(), "Domácí mazlíčci vítáni") !== FALSE) {
-                                $animals = 1;
-                                return ["animals" => $animals];
-                            }
-                            return NULL;
-                        });
-                    //to samé s druhou tabulkou
-                    $data2 = $item->filter('div:nth-child(3) > div:nth-child(2) > ul > li')
-                        ->each(static function (Crawler $line)  use ($poznamka): ?array {
+                        ->each(static function (Crawler $line) use ($poznamka): ?array {
                             if (strpos($line->text(), "Číslo podlaží v domě: ") !== FALSE) {
                                 $stairs = $line->text();
                                 $stairs = str_replace("Číslo podlaží v domě: ", "", $stairs);
-                                return ["stairs" => $stairs];
+                                return ["stairs" => (int) $stairs];
+                            }
+                            if (strpos($line->text(), "Dispozice bytu: ") !== FALSE) {
+                                $size = $line->text();
+                                $size = str_replace("Dispozice bytu: ", "", $size);
+                                if (strpos($size, "atypické") && strpos($size, "atypický")){
+                                    $size = "Atypický";
+                                }
+                                return ["size" => $size];
+                            }
+                            if (strpos($line->text(), "Stav objektu") !== FALSE) {
+                                $condition = $line->text();
+                                $condition = str_replace("Stav objektu: ", "", $condition);
+
+                                return ["condition" => $condition];
+                            }
+                            if (strpos($line->text(), "Celková podlahová plocha: ") !== FALSE) {
+                                $area = $line->text();
+                                $area = preg_replace('/\D+/', "", $area);
+                                return ["area" => (int) $area];
+                            }
+                            return NULL;
+                        });
+
+                    //to samé s druhou tabulkou
+                    $data2 = $item->filter('div:nth-child(3) > div:nth-child(2) > ul > li')
+                        ->each(function (Crawler $line)  use ($poznamka): ?array {                                       
+                            if (strpos($line->text(), "Číslo podlaží v domě: ") !== FALSE) {
+                                $stairs = $line->text();
+                                $stairs = str_replace("Číslo podlaží v domě: ", "", $stairs);
+                                return ["stairs" => (int) $stairs];
                             }
                             if (strpos($line->text(), "Dispozice bytu: ") !== FALSE) {
                                 $size = $line->text();
@@ -198,13 +195,13 @@ class RealityMixReader implements ChainableReaderInterface {
                             if (strpos($line->text(), "Celková podlahová plocha: ") !== FALSE) {
                                 $area = $line->text();
                                 $area = preg_replace('/\D+/', "", $area);
-                                return ["area" => $area];
+                                return ["area" => (int) $area];
                             }
                             if (strpos($line->text(), "Balkón")  !== FALSE) {
-                                $balcony = true;
+        
                                 //u balkonu může být údaj o velikosti - např. 5m2. To náš ale nezajímá, regexem to replacneme.
                                 $balcony = preg_replace('/\D+/', "", $balcony);
-                                return ["balcony" => $balcony];
+                                return ["balcony" => (bool) $balcony];
                             }
                             if (strpos($line->text(), "Výtah")  !== FALSE) {
                                 $elevator = true;
@@ -212,48 +209,28 @@ class RealityMixReader implements ChainableReaderInterface {
                                 return ["elevator" => $elevator];
                             }
 
-                            if (strpos($line->text(), "Domácí mazlíčci vítáni") !== FALSE) {
-                                $animals = 1;
-                                return ["animals" => $animals];
-                            }
-                            //pokusíme se přečíst zbytek dat
-                            if (strpos($poznamka, "Nevybaven") || strpos($poznamka, "nevybaven")){
-                                return ["furtniture" => "Nevybaveno"];
-                            }
-                            else if (strpos($poznamka, "vybaven") - strpos("není", $poznamka) < 15) {
-                                return ["furtniture" => "Nevybaveno"];
-                            }
-                            else if (strpos($poznamka, "vybaven")){
-                                if (strpos($poznamka, "plně") && strpos($poznamka, "vybaven") - strpos("není", $poznamka) < 15) {
-                                    return ["furtniture" => "Vybaveno"];
-                                }
-                                else{
-                                    return ["furtniture" => "Částečně"];
-                                }
-                            }
-                            else if (strpos($poznamka, "nábytek")){
-                                if (strpos($poznamka, "nábytek") - strpos("je", $poznamka) < 15 || strpos($poznamka, "je") - strpos("nábytek", $poznamka) < 15){
-                                    return ["furtniture" => "Částečně"];
-                                }
-                            }
-                            if (strpos($poznamka, "balkon") || (strpos($poznamka, "balkón"))){
-                                return ["balcony" => 1];
-                            }
                             if (strpos($poznamka, "výtah")){
-                                return ["elevator" => 1];
+                                return ["elevator" => true];
                             }
-                            return NULL;
+                            if (strpos($line->text(), "balkon") !== FALSE) {
+                              
+                                return ["balcony" => true];
+                            }
+                            $animals = $this->checkAnimals($poznamka);
+                            $balcony = $this->checkForString($poznamka, "", "balkon");
+                            if (!$balcony){
+                               $balcony = $this->checkForString($poznamka, "", "balkón");
+                            }
+                            $elevator= $this->checkForString($poznamka, "", "výtah");
+                           
+                            $furniture = $this->checkFurniture($poznamka);
+                            return ["animals" => $animals, "furniture" => $furniture, "balcony" => (bool) $balcony, 'elevator' =>  (bool)  $elevator];    
                         });
 
                     //přidáme fetchnutá data do pole, které obsahuje data obou tabulek. pokud se hodnota nevrátila - např. ji zadavatel bytu nevyplnil, vrátíme prázdný string.
+
                     $alldata = array_merge(...array_values(array_filter($data)),...array_values(array_filter($data2)));
-                    foreach ($alldata as $key => $value) {
-                        if ($value == NULL){
-                            $alldata[$key] = "";
-                        }
-                    }
-                    //vytvoříme nový apartment_detailed - byt s detaily
-                    $ap_d =  new Apartment_detailed($url , $alldata["animals"] ?? NULL, $alldata["furniture"] ?? NULL, $alldata["elevator"] ?? 0, $alldata["stairs"] ?? NULL, $alldata["condition"] ?? NULL, $alldata["size"] ?? NULL, $alldata["balcony"] ?? 0, $alldata["area"] ?? NULL);
+                    $ap_d =  new Apartment_detailed($url , $alldata["animals"] ?? NULL, $alldata["furniture"] ?? NULL, $alldata["elevator"] ?? false, $alldata["stairs"] ?? NULL, $alldata["condition"] ?? NULL, $alldata["size"] ?? NULL, $alldata["balcony"] ?? false, $alldata["area"] ?? NULL);
                     return $ap_d;
                 });
         }
@@ -261,4 +238,52 @@ class RealityMixReader implements ChainableReaderInterface {
         return array_merge(...$apartments_all);
     }
 
+
+   protected function checkAnimals(string $note) {
+    echo "A";
+        if ($this->checkForString($note,"bez", "mazlíčk")){
+            echo "B";
+            return true;
+        } 
+        else if ($this->checkForString($note,"mazlíč", "vítá")){
+            echo "F";
+            return true;
+            } 
+        else if ($this->checkForString($note,"zvíř", "nevadí")){
+            echo "C";
+            return false;
+            } 
+        else if ($this->checkForString($note,"mazlíč", "nevadí")){
+            echo "D";
+            return true;
+            } 
+        else if ($this->checkForString($note,"bez", "zvíř")){
+            echo "E";
+            return false;
+        } 
+        else{
+              echo "F";
+              return NULL;
+        }
+    }
+
+
+   protected function checkFurniture(string $note) {
+
+        if ($this->checkForString($note,"plně", "vybaven")) $furniture = "zařízený";
+        else if (!$this->checkForString($note,"vybaven", "nabytkem")) $furniture = "zařízený";
+        else if (!$this->checkForString($note,"vybaven", "nábytkem")) $furniture = "zařízený";
+        else if (!$this->checkForString($note,"obsahuje", "nabytek")) $furniture = "zařízený";
+        else if (!$this->checkForString($note,"kompletně", "vybaven"))  $furniture = "zařízený";
+        else if (!$this->checkForString($note,"částečně", "vybaven"))  $furniture = "částečně zařízený";
+        else if (!$this->checkForString($note,"není", "vybaven"))  $furniture = "zařízený";
+        else if (!$this->checkForString($note,"", "nevybaven"))  $furniture = "nezařízený";
+        else $furniture = NULL;
+        return $furniture;
+    }
+    protected function checkForString(string $string, string $first, string $second) {
+        $regexBody = '' === $first ? preg_quote($second) : ($first . '[^' . preg_quote($first) . ']{0,30}\s' . preg_quote($second));
+        $regex = '/' . $regexBody . '/miu';
+        return preg_match_all($regex, $string);
+    }
 }
