@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 namespace App\ValueObject;
 
 class Apartment {
@@ -16,7 +18,7 @@ class Apartment {
 
     public ?string $part;
 
-    public function __construct(?string $id, ?string $name, ?string $url, ?int $price, ?int $pricetotal, ?string $part, ?string $longpart){
+    public function __construct(?string $id, ?string $name, ?string $url, ?float $price, ?int $pricetotal, ?string $part, ?string $longpart){
         $this->id = $id;
         $this->url = $url;
         $this->price = $price;
