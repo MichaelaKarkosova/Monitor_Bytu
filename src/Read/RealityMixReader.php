@@ -35,8 +35,6 @@ class RealityMixReader implements ChainableReaderInterface {
         }
 
         do {
-         // echo "do";
-           //       echo "SOURCE: $source";
             //vytáhneme si data z url,kde je výpis všech bytů. Zároveň odebereme z veškerých reklam tag li.
             $html = file_get_contents($source);
             $html = str_replace('li class="rmix-acquisition-banner"', "", $html);
@@ -54,16 +52,9 @@ class RealityMixReader implements ChainableReaderInterface {
                 $crawler = new Crawler($html);
 
             //pokud je vše ok, vytvoříme crawler filter najednotlivé "dlaždice" bytů
-          //  $ok = 0 == $crawler->filter('.alert--info')->count();
-            $ok = $crawler->filter('.paginator__list-item--disabled')->count() > 0;
-            //if ($ok) {
-             // echo "OK: $ok";
-                //projedeme jednotlivé byty ve filteru
-             /// print_r($crawler->filter('.paginator__list-item--disabled')->count()." ");
+            $ok = $crawler->filter('.paginator__list-item--disabled')->count() < 1;
                 $apartments = $crawler->filter('.advert-item__content-data')
                     ->each(static function (Crawler $item) {
-                    //    print_r($item);
-
                          //vytáhneme cenu bytu
                          $rent = $item->filter("div.text-xl.font-extrabold")->text();
                          print_r($rent);
@@ -131,7 +122,6 @@ class RealityMixReader implements ChainableReaderInterface {
         //vybereme jen byty ze zdroje realitymix
         $allapartments = $db->query("select url, imported from byty where url like '%realitymix%'")->fetch_all(MYSQLI_ASSOC);
         //projdeme všechny byty z databáze
-        //print_r($allapartments);
         foreach ($allapartments as $a) {
             //vytáhneme data z url detailu bytu
             $crawler = new Crawler(file_get_contents($a["url"]));
@@ -160,7 +150,6 @@ class RealityMixReader implements ChainableReaderInterface {
                             if (strpos($line->text(), "Stav objektu") !== FALSE) {
                                 $condition = $line->text();
                                 $condition = str_replace("Stav objektu: ", "", $condition);
-
                                 return ["condition" => $condition];
                             }
                             if (strpos($line->text(), "Celková podlahová plocha: ") !== FALSE) {
@@ -239,34 +228,14 @@ class RealityMixReader implements ChainableReaderInterface {
     }
 
 
-   protected function checkAnimals(string $note) {
-    echo "A";
-        if ($this->checkForString($note,"bez", "mazlíčk")){
-            echo "B";
-            return true;
-        } 
-        else if ($this->checkForString($note,"mazlíč", "vítá")){
-            echo "F";
-            return true;
-            } 
-        else if ($this->checkForString($note,"zvíř", "nevadí")){
-            echo "C";
-            return false;
-            } 
-        else if ($this->checkForString($note,"mazlíč", "nevadí")){
-            echo "D";
-            return true;
-            } 
-        else if ($this->checkForString($note,"bez", "zvíř")){
-            echo "E";
-            return false;
-        } 
-        else{
-              echo "F";
-              return NULL;
-        }
+    protected function checkAnimals(string $note) {
+        if ($this->checkForString($note,"bez", "mazlíčk")) return false;
+        else if ($this->checkForString($note,"mazlíč", "vítá")) return true;
+        else if ($this->checkForString($note,"zvíř", "nevadí")) return true;
+        else if ($this->checkForString($note,"mazlíč", "nevadí")) return true;
+        else if ($this->checkForString($note,"bez", "zvíř")) return false;
+        else return null;
     }
-
 
    protected function checkFurniture(string $note) {
 

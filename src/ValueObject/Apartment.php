@@ -14,9 +14,9 @@ class Apartment {
 
     public ?float $pricetotal;
 
-    public ?string $longpart;
-
     public ?string $part;
+    
+    public ?string $longpart;
 
     public function __construct(?string $id, ?string $name, ?string $url, ?float $price, ?int $pricetotal, ?string $part, ?string $longpart){
         $this->id = $id;

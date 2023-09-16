@@ -49,14 +49,13 @@ class idnesReader implements ChainableReaderInterface
                 'Referer' => $source,
                 'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'],
                 ]);
-                }
+            }
             catch (exception $e){
                 echo $e;
             }
-
-                $request = $client->get($source);
-                $html = (string) $request->getBody();
-                $crawler = new Crawler($html);
+            $request = $client->get($source);
+            $html = (string) $request->getBody();
+            $crawler = new Crawler($html);
             //projdeme všechny dlaždice s byty a jednotlivé prvky v nich
             $apartments = $crawler->filter('.c-products__list .c-products__item article a.c-products__link')
                 ->each(static function (Crawler $item) use ($source): apartment {
@@ -104,8 +103,7 @@ class idnesReader implements ChainableReaderInterface
 
 
     //v této metodě získáváme detaily bytů
-    public function getDetails(): array
-    {
+    public function getDetails(): array {
         $appartments_d = [];
         $db = $this->db->getConnection();
         //vytáhneme všechny idnes adresy na detaily z databáze
@@ -170,32 +168,7 @@ class idnesReader implements ChainableReaderInterface
                 $size = "Pokoj";
             }
             //pokusíme se přečíst, zda jsou v bytě povolení mazlíčci. Pokud zjistíme výskyt těchto frází v určité vzdálenosti od sebe, vrátíme 0, jako zakázano.
-            // Pokud ne, vracíme null - neuvedeno
-            if (strpos($poznamka, "bez") && strpos($poznamka, "zvirat")) {
-                if (strpos($poznamka, "bez") - strpos($poznamka, "zvirat") < 50) {
-                    $animals = 0;
-                }
-            }
-            if (strpos($poznamka, "bez") && strpos($poznamka, "mazlíčků")) {
-                if (strpos($poznamka, "bez") - strpos($poznamka, "mazlíčků") < 50) {
-                    $animals = 0;
-                }
-            }
-            if (strpos($poznamka, "bez") && strpos($poznamka, "zvířat")) {
-                if (strpos($poznamka, "bez") - strpos($poznamka, "zvířat") < 50) {
-                    $animals = 0;
-                }
-            }
-            if (strpos($poznamka, "zvířata") && strpos($poznamka, "ne")) {
-                if (strpos($poznamka, "ne") - strpos($poznamka, "zvířata") < 20) {
-                    $animals = 0;
-                }
-            }
-            if (strpos($poznamka, "bez") && strpos($poznamka, "zvířat")) {
-                if (strpos($poznamka, "bez") - strpos($poznamka, "zvířat") < 20) {
-                    $animals = 0;
-                }
-            }
+               $animals = $this->checkAnimals($poznamka);
             if ($stairs > 0){
                 $stairs = strstr($stairs, '(', true);
                 $stairs = (int) preg_replace('/\D+/', "", $stairs);
@@ -206,5 +179,20 @@ class idnesReader implements ChainableReaderInterface
         }
         //a celé pole vrátíme
         return $appartments_d;
+    }
+
+    protected function checkAnimals(string $note) {
+        if ($this->checkForString($note,"bez", "mazlíčk")) return false;
+        else if ($this->checkForString($note,"mazlíč", "vítá")) return true;
+        else if ($this->checkForString($note,"zvíř", "nevadí")) return true;
+        else if ($this->checkForString($note,"mazlíč", "nevadí")) return true;
+        else if ($this->checkForString($note,"bez", "zvíř")) return false;
+        else return null;
+    }
+
+    protected function checkForString(string $string, string $first, string $second) {
+        $regexBody = '' === $first ? preg_quote($second) : ($first . '[^' . preg_quote($first) . ']{0,30}\s' . preg_quote($second));
+        $regex = '/' . $regexBody . '/miu';
+        return preg_match_all($regex, $string);
     }
 }

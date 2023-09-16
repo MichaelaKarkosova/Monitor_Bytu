@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Write;
 
+use Normalizer;
 use App\Database;
 use App\Notification\ApartmentsNotifierInterface;
 use App\ValueObject\ApartmentsResult;
@@ -23,7 +24,6 @@ class DataWriter implements WriterInterface {
     public function write(ApartmentsResult $reader): void {
         echo "Writing apartments...";
         $newUrls = [];
-
         $foundUrls = [];
         $imported = (new DateTime('now', new DateTimeZone('UTC')))->format('Y-m-d H:i:s');
         $data = [];
@@ -33,9 +33,6 @@ class DataWriter implements WriterInterface {
         $existing = array_column($existingg, "url");
         //projdeme všechny byty v databázi
         foreach ($reader->apartments as $index => $apartment) {
-//if (strpos($apartment, "pronajem") && strpos($apartment->part, "Praha") && $reader->type == "bezrealitky"){
-            //echo "flats: ";
-            //print_r($apartment);
             //přepíšeme index na url
             $data[$apartment->url] = $apartment;
             //kontrola, jestli to už v databázi neexistuje
@@ -44,7 +41,6 @@ class DataWriter implements WriterInterface {
             $stmt->bind_param("s", $apartment->id);
             $stmt->execute();
             $stmt->store_result();
-
             //pokud byt existuje v databázi, provedeme update včetně novéhoi imported času. Pokud ne, vložíme ho.
             if ($existing != null && in_array($apartment->id, $existing)) {
                 $bindparams = [$apartment->id, $apartment->name, $apartment->url, $apartment->price, $apartment->pricetotal, $apartment->part, $apartment->longpart, $imported, $apartment->id];
@@ -71,7 +67,6 @@ class DataWriter implements WriterInterface {
         if (count($newUrls) > 0){
             $this->apartmentsNotifier->notify($newUrls);
         }
-   // }
     }
 
     //zde zapíšeme detaily do databáze - přijdou sem detaily jednoho bytu
@@ -79,32 +74,30 @@ class DataWriter implements WriterInterface {
         echo "Writing details...";
         //projdeme pole dat a vložíme vše do databáze
         foreach ($values as $v) {
-      //      echo "details: $v->id";
-            //var_export($v->id);
-        if ($v->area > 3 && $v->area < 300) {
-            //úprava hodnot do jednoho stejného tvaru
+         //replacneme stav v condition, normalizujeme string - oprava bugu, kdy někdy přišlo ve výsledku "ý" a jindy unicode znaky 0079 + 0301
             if ($v->condition){
-                if (strpos(strtolower($v->condition), "dobrý")){
-                    $v->condition = "Dobrý";
-                }
+            $v->condition = Normalizer::normalize(trim(strtolower(str_replace([" stav", "\x08", "\r", "\n", "\t"], ["", "", "", "", ""], $v->condition))));
             }
-            if ($v->size){
-                if (strpos(strtolower($v->size), "atypic")){
-                    $v->size = "Atypický";
+            //podmínka proti PRAVDĚPODOBNĚ vadným datům
+            if ($v->area > 3 && $v->area < 400) {
+                //úprava hodnot do jednoho stejného tvaru
+                if ($v->size){
+                    if (strpos(strtolower($v->size), "atypic")){
+                        $v->size = "Atypický";
+                    }
+                    if (strpos(strtolower($v->size), "pokoj")){
+                        $v->size= "Pokoj";
+                    }
                 }
-                if (strpos(strtolower($v->size), "pokoj")){
-                    $v->size= "Pokoj";
-                }
+                $db = $this->db->getConnection();
+                $sql = "insert IGNORE into byty_detaily (byty_id, zvirata, vybaveni, patro, stav, dispozice, balkon, vymera, vytah) values (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                $stmt = $db->prepare($sql);
+                $stmt->bind_param("sssisssis", ...array_values((array) $v));
+                $stmt->execute();
             }
-            $db = $this->db->getConnection();
-            $sql = "insert IGNORE into byty_detaily (byty_id, zvirata, vybaveni, patro, stav, dispozice, balkon, vymera, vytah) values (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            $stmt = $db->prepare($sql);
-            $stmt->bind_param("sssisssis", ...array_values((array) $v));
-            //var_export($v);
-            $stmt->execute();
-        }
         }
     }
+    //zápis do tabulky, kde jsou historie cen
     public function writePrice(string $url, ?float $price, ?float $pricetotal, ?string $part, string $date){
         $db = $this->db->getConnection();
         $sql = "insert into ceny(url, price, pricetotal, part, date) values (?, ?, ?, ?, ?)";

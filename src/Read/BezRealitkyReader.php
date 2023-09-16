@@ -81,28 +81,27 @@ class BezRealitkyReader implements ChainableReaderInterface {
                             $finalprice = $rent+$price;
                             $parts = $name;
                             $part = explode(",", $parts)[1];
-                            $part = str_replace(" Praha", "Praha", $part);
                             //a nastavíme ji také do longpartu - bude potřeba při vkládání do DB
                             $longpart = $part;
                             //rozdělíme část Prahy na ulice a část do pole
-                            $partsplitted = explode(", ", $part);
+                            $partsplitted = explode(",", $part);
                             $finalpart = "";
                             //projedeme pole hodnot - ulice, část, popř. se zde může objevit okres
                             foreach ($partsplitted as $ps) {
                                 //pokud je část ve formátu Praha - Něco, použijeme ho. Pokud ne, nic se nestane.
-                                if (strpos($ps, " - ")) {
+                                if (strpos($ps, "-")) {
+                                    print_r($ps);
                                     $finalpart = $finalpart.$ps;
                                 }
                             }
                             //provedeme regexem replace klíčových slov - Okres Praha, Praha 1-22 a Praha -. Zůstanem nám tedy jen část, např. Holešovice.
                             $finalpart = str_replace(" Praha", "Praha", $finalpart);
                             $finalpart = preg_replace("/Praha (\d+)( -) /", "", $finalpart);
-
                             $finalpart = str_replace("Praha - ", "", $finalpart);
                             $finalpart = str_replace(", okres Praha", "", $finalpart);
-    
                             //vrátíme object Apartment
                             $finalpart = str_replace(" Praha - ", "", $finalpart);
+                                                        print_r("final part 5:" .$finalpart);
                             return
                                 new Apartment($href, $name, $href, (int) $rent, (int) $finalprice, $finalpart, $longpart);
                         });
@@ -195,7 +194,6 @@ class BezRealitkyReader implements ChainableReaderInterface {
                     //to samé s druhou tabulkou
                     $data2 = $item->filter('div > section > div > div:nth-child(2) > table > tbody > tr')
                         ->each(static function (Crawler $line): ?array {
-                            //      print("//".$line->text()."");
                             if (strpos($line->text(), "Podlaží") !== FALSE) {
                                 $stairs = $line->text();
                                 $stairs = str_replace("Podlaží", "", $stairs);
@@ -216,7 +214,6 @@ class BezRealitkyReader implements ChainableReaderInterface {
                                 else{
                                     $furniture = "zařízený";
                                 }
-
                                 return ["furniture" => $furniture];
                             }
                             if (strpos($line->text(), "Stav") !== FALSE) {
@@ -232,10 +229,11 @@ class BezRealitkyReader implements ChainableReaderInterface {
                                 }
                                 return ["condition" => $condition];
                             }
+                            //nutno vyfiltrovat data o velikosti balkonu, zahrádky, lodžie, sklepa...
                             if (strpos($line->text(), "m²") !== FALSE && strpos($line->text(), "zahrádka") === FALSE && (strpos($line->text(), "Lodžie") === FALSE && strpos($line->text(), "Sklep") === FALSE && strpos($line->text(), "Terasa") === FALSE) && strpos($line->text(), "Balkón") === FALSE) {
-                                $area = $line->text();
-                                $area = preg_replace('/\D+/', "", $area);
-                                return ["area" => (int) $area];
+                                    $area = $line->text();
+                                    $area = preg_replace('/\D+/', "", $area);
+                                    return ["area" => (int) $area];
                             }
 
                             if (strpos($line->text(), "Balkón")  !== FALSE) {
@@ -270,11 +268,4 @@ class BezRealitkyReader implements ChainableReaderInterface {
         //vrátíme pole všech dat
         return array_merge(...$apartments_all);
     }
-
-    public function writePrice(){
-
-
-
-    }
-
 }
