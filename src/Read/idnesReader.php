@@ -183,14 +183,14 @@ class idnesReader implements ChainableReaderInterface
 
     protected function checkAnimals(string $note) {
         if ($this->checkForString($note,"bez", "mazlíčk")) return false;
+        else if ($this->checkForString($note,"bez", "zvíř")) return false;
         else if ($this->checkForString($note,"mazlíč", "vítá")) return true;
         else if ($this->checkForString($note,"zvíř", "nevadí")) return true;
         else if ($this->checkForString($note,"mazlíč", "nevadí")) return true;
-        else if ($this->checkForString($note,"bez", "zvíř")) return false;
         else return null;
     }
 
-    protected function checkForString(string $string, string $first, string $second) {
+        protected function checkForString(string $string, string $first, string $second) {
         $regexBody = '' === $first ? preg_quote($second) : ($first . '[^' . preg_quote($first) . ']{0,30}\s' . preg_quote($second));
         $regex = '/' . $regexBody . '/miu';
         return preg_match_all($regex, $string);

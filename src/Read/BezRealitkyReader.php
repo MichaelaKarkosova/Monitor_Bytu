@@ -84,15 +84,21 @@ class BezRealitkyReader implements ChainableReaderInterface {
                             //a nastavíme ji také do longpartu - bude potřeba při vkládání do DB
                             $longpart = $part;
                             //rozdělíme část Prahy na ulice a část do pole
-                            $partsplitted = explode(",", $part);
-                            $finalpart = "";
-                            //projedeme pole hodnot - ulice, část, popř. se zde může objevit okres
-                            foreach ($partsplitted as $ps) {
-                                //pokud je část ve formátu Praha - Něco, použijeme ho. Pokud ne, nic se nestane.
-                                if (strpos($ps, "-")) {
-                                    print_r($ps);
-                                    $finalpart = $finalpart.$ps;
+    ;
+                            if (strpos(",", $part)){
+                                $partsplitted = explode(",", $part);
+                                $finalpart = "";
+                                //projedeme pole hodnot - ulice, část, popř. se zde může objevit okres
+                                foreach ($partsplitted as $ps) {
+                                    //pokud je část ve formátu Praha - Něco, použijeme ho. Pokud ne, nic se nestane.
+                                    if (strpos($ps, "-")) {
+                                        print_r($ps);
+                                        $finalpart = $finalpart.$ps;
+                                    }
                                 }
+                            }
+                            else{
+                                 $finalpart = $part;
                             }
                             //provedeme regexem replace klíčových slov - Okres Praha, Praha 1-22 a Praha -. Zůstanem nám tedy jen část, např. Holešovice.
                             $finalpart = str_replace(" Praha", "Praha", $finalpart);
@@ -159,7 +165,7 @@ class BezRealitkyReader implements ChainableReaderInterface {
                                     $furniture = "nezařízený";
                                 }
                                 else{
-                                    $furniture = "zařízeno";
+                                    $furniture = "zařízený";
                                 }
 
                                 return ["furniture" => $furniture];
@@ -167,7 +173,7 @@ class BezRealitkyReader implements ChainableReaderInterface {
                             if (strpos($line->text(), "Stav") !== FALSE) {
                                 $condition = $line->text();
                                 if (strpos($condition, "Dobrý")){
-                                    $condition = "dobrý stav";
+                                    $condition = "dobrý";
                                 }
                                 else{
                                  $condition = str_replace("Stav", "", $condition); 

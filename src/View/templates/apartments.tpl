@@ -38,7 +38,9 @@
         <h6>Data k: {$item.imported|date_format:"%d. %m. %y, %H:%M"}</h6>
         <h5><b>{$item.name}</b></h5>
         <h6>{$item.part}</h6>
-        <h6>{$item.pricetotal} Kč/měsíc </h6>
+        <h6>{$item.pricetotal} Kč/měsíc               {if $source=="idnes" or $source=="realityMix"}
+                    <b>(+ poplatky)</b>
+                {/if}</h6>
         <h6>{$item.dispozice}</h6>
         <h6>{$item.vymera} m2</h6>
                 <h6>{$item.vybaveni}</h6>
@@ -61,10 +63,7 @@
                   <h6> <b>Stav:</b> {$item.stav}</h6>
                 <h6><b>Domácí zvířata: </b>{$zvirata}</h6>
                 <h6><b>Balkon: </b>{$balkon}</h6>
-                <h5><b>Cena: </b>{$item.price} + {$item.pricetotal - $item.price} Kč  </h5>
-                {if $source=="idnes" or $source=="realityMix"}
-                    <b>Zobrazená cena je BEZ poplatků</b>
-                {/if}
+                <h5><b>Cena: </b>{$item.price} + {$item.pricetotal - $item.price} Kč   </h5>
                 <a class="url btn btn-primary" href="{$item.url}" target="blank">Podrobnosti</a>
 
             </div>

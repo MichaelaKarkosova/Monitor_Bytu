@@ -301,10 +301,10 @@ class DataRenderer {
         $binds = [];
         $conditions = [];
         if (!isset($filters['pricemin'])) {
-           $filters['pricemin'] = 5000;
+           $filters['pricemin'] = 500;
         }
         if (!isset($filters['pricemax'])) {
-           $filters['pricemax'] = 55000;
+           $filters['pricemax'] = 200000;
         }
         //nastavíme podmínky do databáze pro filtry, pokud jsou nastaveny.
         if (isset($filters['pricemin'])) {

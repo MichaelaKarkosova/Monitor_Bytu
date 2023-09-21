@@ -52,7 +52,8 @@ class RealityMixReader implements ChainableReaderInterface {
                 $crawler = new Crawler($html);
 
             //pokud je vše ok, vytvoříme crawler filter najednotlivé "dlaždice" bytů
-            $ok = $crawler->filter('.paginator__list-item--disabled')->count() < 1;
+            $ok = $crawler->filter('.paginator__list-item--disabled a i.icon-chevron-right')->count() < 1;
+            if ($ok) {
                 $apartments = $crawler->filter('.advert-item__content-data')
                     ->each(static function (Crawler $item) {
                          //vytáhneme cenu bytu
@@ -107,7 +108,7 @@ class RealityMixReader implements ChainableReaderInterface {
                 $source = $nextpage;
                 //zkopírujeme obsah bytů na aktuální stránce do pole $finalapartments, kde se nachází všechny byty ze všech stránek.
                 $finalapartments = array_merge($finalapartments, $apartments);
-            //}
+            }
         }
         while($ok);
         //vrátíme, o který reader se jednalo

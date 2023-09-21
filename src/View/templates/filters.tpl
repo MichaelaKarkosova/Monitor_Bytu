@@ -4,10 +4,10 @@
 {$areamin = $filters['areamin']}
 {$stav = "Použité filtry:"}
 {if $filters['pricemax'] eq null}
-    {$maxprice = 55000}
+    {$maxprice = 100000}
 {/if}
 {if $filters['pricemin'] eq null}
-    {$minprice = 5000}
+    {$minprice = 500}
 {/if}
 
 {if $filters['areamin'] eq null}
@@ -85,8 +85,8 @@
                     <div class="d-flex w-100 align-items-center justify-content-between">
                         <strong class="mb-1">Cena</strong>
                     </div>
-                    <div class="col-10 mb-1"> Od <input type="number" value="{$minprice}" min="4000" id="pricemin" step="500" name="pricemin" size="5">
-                        do <input type="number" min="4000" size="5" id="pricemax" value="{$maxprice}" step="500" name="pricemax"> Kč</div>
+                    <div class="col-10 mb-1"> Od <input type="number" value="{$minprice}" min="500" id="pricemin" step="500" name="pricemin" size="5">
+                        do <input type="number" min="0" size="5" id="pricemax" value="{$maxprice}" step="500" name="pricemax"> Kč</div>
 
                 </div>
                             

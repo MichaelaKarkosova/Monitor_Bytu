@@ -33,6 +33,9 @@ class DataWriter implements WriterInterface {
         $existing = array_column($existingg, "url");
         //projdeme všechny byty v databázi
         foreach ($reader->apartments as $index => $apartment) {
+        	  $apartment->part = str_replace("Praha - ", "", $apartment->part);
+        	 $apartment->part = str_replace("Praha -", "", $apartment->part);
+             $apartment->part = str_replace("Praha-", "", $apartment->part);
             //přepíšeme index na url
             $data[$apartment->url] = $apartment;
             //kontrola, jestli to už v databázi neexistuje
@@ -78,6 +81,7 @@ class DataWriter implements WriterInterface {
             if ($v->condition){
             $v->condition = Normalizer::normalize(trim(strtolower(str_replace([" stav", "\x08", "\r", "\n", "\t"], ["", "", "", "", ""], $v->condition))));
             }
+             $v->condition = str_replace("hrubába", "hrubá stavba", $v->condition);
             //podmínka proti PRAVDĚPODOBNĚ vadným datům
             if ($v->area > 3 && $v->area < 400) {
                 //úprava hodnot do jednoho stejného tvaru
@@ -89,6 +93,7 @@ class DataWriter implements WriterInterface {
                         $v->size= "Pokoj";
                     }
                 }
+
                 $db = $this->db->getConnection();
                 $sql = "insert IGNORE into byty_detaily (byty_id, zvirata, vybaveni, patro, stav, dispozice, balkon, vymera, vytah) values (?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 $stmt = $db->prepare($sql);
