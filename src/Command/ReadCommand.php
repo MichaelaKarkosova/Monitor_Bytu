@@ -5,6 +5,7 @@ namespace App\Command;
 use App\Read\BezRealitkyReader;
 use App\Database;
 use App\Read\idnesReader;
+use App\Read\UlovDomovReader;
 use App\Read\ReaderChain;
 use App\Read\ReaderInterface;
 use App\Read\RealityMixReader;
@@ -41,7 +42,8 @@ class ReadCommand extends Command  {
         $reader = new ReaderChain([
             new idnesReader($this->db),
             new BezRealitkyReader($this->db),
-            new RealityMixReader($this->db)
+            new RealityMixReader($this->db),
+            new UlovDomovReader($this->db),
         ]);
         //result spouští read na argument v příkazu - url na stránku s byty
         $result = $reader->read($input->getArgument('arg'));
