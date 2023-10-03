@@ -1,7 +1,12 @@
 <?php
-declare(strict_types=1);
+
+declare(strict_types=0);
 
 namespace App\Write;
+
+ini_set('display_errors', true);
+ini_set('display_startup_errors', true);
+error_reporting(E_ALL);
 
 use Normalizer;
 use App\Database;
@@ -111,4 +116,90 @@ class DataWriter implements WriterInterface {
         $stmt->execute();
     }
 
+
+
+    public function populateAverage(){
+        $db = $this->db->getConnection();
+       $sql = "truncate byty.average";
+        $stmt = $db->prepare($sql);
+        $stmt->execute();
+        $conditions = $this->getAllOf("stav", true);
+                $parts = $this->getAllOf("part");
+        //var_export($conditions);
+        //var_export($parts);
+        unlink("data.json");
+        foreach ($parts as $key=>$p){
+            foreach ($conditions as $key=>$c){
+                $part = $p[0];
+                if ($part == "") $part = "NULL";
+                $condition = $c[0];
+                if ($condition == "") $condition = "NULL";
+              $average =  $this->getPerM2($part, $condition);
+              print_r("!!!!!!!!!!!!!!!".var_export($average[1]));
+              if ($average[1] == false || $average[0] < 1) continue;
+              $query = "insert into byty.average (part, stav, perm3) values (?, ?, ?)";
+              $stmt2 = $db->prepare($query);
+               print_r([$part, $condition, $average[0]]);
+              $stmt2->bind_param("ssi", $part, $condition, $average[0]);
+              print_r("INSERTING");
+              $stmt2->execute();
+             $jsondata =
+                array("part" => $part,
+                    "condition" => $condition,
+                        "average" => $average[0]
+                    );
+                    $this->putIntoJson(json_encode($jsondata));
+            }
+        }
+
+
+    }
+
+    public function putIntoJson($jsondata){
+        $json = file_get_contents('data.json');
+        $data = json_decode($json);
+        $data[] = $jsondata;
+        file_put_contents('data.json', json_encode($data));
+    }
+
+        public function getAllOf($value, $isDetail = false){
+        $db = $this->db->getConnection();
+        if ($isDetail) $table = "byty_detaily";
+            else $table = "byty";
+        $sql = "select DISTINCT $value from $table";
+        $stmt = $db->prepare($sql);
+        $stmt->execute();
+       return $stmt->get_result()->fetch_all();
+    }
+    
+    public function getPerM2($part, $stav, $sum = 0){
+  //      print_r("select DISTINCT b.pricetotal, bd.vymera, b.url, b.pricetotal/bd.vymera as perm3 from byty b join byty_detaily bd on bd.byty_id = b.url where part like '%$part%' and stav=$stav");
+            $db_c = $this->db->getConnection();
+        //select DISTINCT b.pricetotal, bd.vymera, b.url, b.pricetotal/bd.vymera as perm3 from byty b join byty_detaily bd on bd.byty_id = b.url where part like "%Holešovice%" and stav="Dobrý" limit 10;
+            $sql = "select DISTINCT b.pricetotal, bd.vymera, b.url, b.pricetotal/bd.vymera as perm3 from byty b join byty_detaily bd on bd.byty_id = b.url where part like '%$part%' and stav='$stav'";
+            
+      //  if ($part === "NULL" && $condition === "NULL"){
+            if ($part === "NULL") $sql = str_replace("part like '%$part%'", "part is NULL", $sql);
+            if ($stav === "NULL") $sql = str_replace("stav like '%$stav%'", "stav is NULL", $sql);
+            $stmt = $db_c->prepare($sql);
+            $stmt->execute();
+        //vezmeme výsledky sql
+            $res = $stmt->get_result();
+            $result = $res->fetch_all();
+            $count = mysqli_num_rows($res);
+                          //          $sum = 0;
+           // print_r($result);
+            foreach ($result as $row){
+                $sum = $sum+(int) $row[3];
+               // print_r($row["perm3"];);
+            }
+        
+                        if ($count < 1 ) return [0, false];
+                        print_r("Počet je $count");
+       //     $rows = $result->fetch_row();
+           print_r($result);
+            //print_r($sum);
+           // print_r("SUM: ".$sum/mysqli_num_rows($result));
+            return [$sum/$count, true];
+    }
 }

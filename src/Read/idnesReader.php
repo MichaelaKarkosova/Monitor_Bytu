@@ -39,15 +39,15 @@ class idnesReader implements ChainableReaderInterface
         $finalapartments = [];
         do {
             //sleep nám pomáhá získat data tak, aby nedošlo k timeoutu ze strany idnesu
-           sleep(15);
+            sleep(15);
             //vytáhneme obsah webu
             try{
-                 $client = new \GuzzleHttp\Client(['headers' => [
-                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
-                'Accept-Language' => 'en-US,en;q=0.9',
-                'Accept-Encoding' => 'gzip, deflate, br',
-                'Referer' => $source,
-                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'],
+                $client = new \GuzzleHttp\Client(['headers' => [
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
+                    'Accept-Language' => 'en-US,en;q=0.9',
+                    'Accept-Encoding' => 'gzip, deflate, br',
+                    'Referer' => $source,
+                    'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'],
                 ]);
             }
             catch (exception $e){
@@ -78,9 +78,7 @@ class idnesReader implements ChainableReaderInterface
                     //projdeme pole obsahující část
                     foreach ($partsplitted as $ps) {
                         //pokud je tam -, tak to znamená Praha - část. Např. Praha - Holešovice, tak ji přidáme k prázdné hodnotě.
-                        if (strpos($ps, " - ")) {
-                            $finalpart = $finalpart . $ps;
-                        }
+                        if (strpos($ps, " - ")) $finalpart = $finalpart . $ps;
                     }
                     //uděláme replace Praha 1-22, výsledek bude tedy např. jen Holešovice.
                     $finalpart = preg_replace("/Praha (\d+)( -) /", "", $finalpart);
@@ -109,11 +107,9 @@ class idnesReader implements ChainableReaderInterface
         //vytáhneme všechny idnes adresy na detaily z databáze
         $allapartments = $db->query("select * from byty where url like '%idnes%'");
         foreach ($allapartments as $a) {
-             $html = @file_get_contents($a["url"]);
+            $html = @file_get_contents($a["url"]);
 
-            if (FALSE === $html) {
-                continue;
-            }
+            if (FALSE === $html) continue;
             $url = $a['url'];
             //vytvoříme crawler na url z databáze
             $crawler = new Crawler(file_get_contents($a['url']));
@@ -164,11 +160,9 @@ class idnesReader implements ChainableReaderInterface
             //nastavíme mazlíčky defaultně na null
             $animals = NULL;
             //rozlišíme, zda se jedná o pokoj. Formát pronájmu pokoje je "Pronájem pokoje xx m2". Nastavíme to pouze na "pokoj".
-            if (strpos($size, "pokoj")) {
-                $size = "Pokoj";
-            }
+            if (strpos($size, "pokoj")) $size = "Pokoj";
             //pokusíme se přečíst, zda jsou v bytě povolení mazlíčci. Pokud zjistíme výskyt těchto frází v určité vzdálenosti od sebe, vrátíme 0, jako zakázano.
-               $animals = $this->checkAnimals($poznamka);
+            $animals = $this->checkAnimals($poznamka);
             if ($stairs > 0){
                 $stairs = strstr($stairs, '(', true);
                 $stairs = (int) preg_replace('/\D+/', "", $stairs);
@@ -190,7 +184,7 @@ class idnesReader implements ChainableReaderInterface
         else return null;
     }
 
-        protected function checkForString(string $string, string $first, string $second) {
+    protected function checkForString(string $string, string $first, string $second) {
         $regexBody = '' === $first ? preg_quote($second) : ($first . '[^' . preg_quote($first) . ']{0,30}\s' . preg_quote($second));
         $regex = '/' . $regexBody . '/miu';
         return preg_match_all($regex, $string);

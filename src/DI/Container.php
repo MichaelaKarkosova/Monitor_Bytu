@@ -3,6 +3,7 @@
 namespace App\DI;
 
 use App\Command\DeleteCommand;
+use App\Command\AverageCommand;
 use App\Read\BezRealitkyReader;
 use App\Database;
 use App\DataRenderer;
@@ -106,6 +107,14 @@ class Container {
         return $this->services['delete_command'] = new DeleteCommand($this->getConnection());
     }
 
+    public function getAverageCommand(): AverageCommand {
+        if (isset($this->services['average_command'])) {
+            return $this->services['average_Command'];
+        }
+
+        return $this->services['average_command'] = new AverageCommand($this->getWriter());
+    }
+
     public function getRenderer(): DataRenderer {
         if (isset($this->services['renderer'])) {
             return $this->services['renderrer'];
@@ -161,6 +170,7 @@ class Container {
         $application = $this->services['console_application'] = new Application();
         $application->add($this->getCommand());
         $application->add($this->getDeleteCommand());
+        $application->add($this->getAverageCommand());
         return $application;
     }
 }

@@ -24,7 +24,6 @@ class DeleteCommand extends Command {
     protected function execute(InputInterface $input, OutputInterface $output) : int {
         //Datetime nastavím na teď a zároveň provedeme modify podle argumentu, např. odečteme 3h
         $datetime = (new DateTime($input->getArgument('datetimeModifier'), new DateTimeZone('UTC')))->format('Y-m-d H:i:s');
-
         //v DB smažeme vše, co je menší než datetime
         $stmt = $this->db->getConnection()->prepare("delete from byty where imported < ?");
         $stmt->bind_param("s", $datetime);
