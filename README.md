@@ -28,6 +28,8 @@ Konfiguraci řeší .env soubory
 
 Aplikace vznikla jako pomůcka pro mě, jelikož se chystám brzo stěhovat do Prahy. Zároveň je to ale skvělý projekt pro portfolio.
 
+Umí také vyhodnotit, zda je byt předražený nebo ne - průměrná cena se počítá podle ceny za m3 podle stavu a části města - např. průměrná cena novostavby v Holešovicích
+
 Obsahuje také 2 barevné módy
 - Light - laděn do modro-bíleho vzhledu
 - Dark  - laděn do černo-šedivého vzhledu
