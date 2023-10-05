@@ -29,13 +29,16 @@ class AverageCommand extends Command  {
 
     //tato metoda se spouští při zaregistrování příkazu
     protected function execute(InputInterface $input, OutputInterface $output): int {
-        $output->writeln("I run");
         $this->writer->populateAverage();
-        return Command::SUCCESS;
+                return Command::SUCCESS;
+            //$output->writeln("cmd: " . $input->getArgument('arg') . "");
     }
 
     protected function configure(): void {
+         //náš příkaz je app:read
          $this->setName("app:average");
+         //a vyžaduje parametr
+        // $this->addArgument('arg', InputArgument::REQUIRED, "argument");
     }
 
 }

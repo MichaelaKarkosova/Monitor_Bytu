@@ -49,6 +49,7 @@ class DataWriter implements WriterInterface {
             $stmt->bind_param("s", $apartment->id);
             $stmt->execute();
             $stmt->store_result();
+           if ($apartment->pricetotal == $apartment->price) $apartment->price = 0;
             //pokud byt existuje v databázi, provedeme update včetně novéhoi imported času. Pokud ne, vložíme ho.
             if ($existing != null && in_array($apartment->id, $existing)) {
                 $bindparams = [$apartment->id, $apartment->name, $apartment->url, $apartment->price, $apartment->pricetotal, $apartment->part, $apartment->longpart, $imported, $apartment->id];
@@ -71,10 +72,12 @@ class DataWriter implements WriterInterface {
             //přidáme do pole všech bytů
             $foundUrls[] = $apartment->id;
         }
+        $this->populateAverage();
         //pokud jsou nějaké nové byty, pošleme notifikaci
         if (count($newUrls) > 0){
             $this->apartmentsNotifier->notify($newUrls);
         }
+
     }
 
     //zde zapíšeme detaily do databáze - přijdou sem detaily jednoho bytu
@@ -136,10 +139,11 @@ class DataWriter implements WriterInterface {
                 if ($condition == "") $condition = "NULL";
               $average =  $this->getPerM2($part, $condition);
               print_r("!!!!!!!!!!!!!!!".var_export($average[1]));
-              if ($average[1] == false || $average[0] < 1) continue;
-              $query = "insert into byty.average (part, stav, perm3) values (?, ?, ?)";
+              if ($average[1] == false || $average[0] === 0 ||  $average[0] === "0") continue;
+                            print_r($average);
+              $query = "insert into byty.average (part, stav, averageprice) values (?, ?, ?)";
               $stmt2 = $db->prepare($query);
-               print_r([$part, $condition, $average[0]]);
+              // print_r([$part, $condition, $average[0]]);
               $stmt2->bind_param("ssi", $part, $condition, $average[0]);
               print_r("INSERTING");
               $stmt2->execute();
@@ -148,7 +152,7 @@ class DataWriter implements WriterInterface {
                     "condition" => $condition,
                         "average" => $average[0]
                     );
-                    $this->putIntoJson(json_encode($jsondata));
+                    //$this->putIntoJson(json_encode($jsondata));
             }
         }
 
@@ -176,7 +180,7 @@ class DataWriter implements WriterInterface {
   //      print_r("select DISTINCT b.pricetotal, bd.vymera, b.url, b.pricetotal/bd.vymera as perm3 from byty b join byty_detaily bd on bd.byty_id = b.url where part like '%$part%' and stav=$stav");
             $db_c = $this->db->getConnection();
         //select DISTINCT b.pricetotal, bd.vymera, b.url, b.pricetotal/bd.vymera as perm3 from byty b join byty_detaily bd on bd.byty_id = b.url where part like "%Holešovice%" and stav="Dobrý" limit 10;
-            $sql = "select DISTINCT b.pricetotal, bd.vymera, b.url, b.pricetotal/bd.vymera as perm3 from byty b join byty_detaily bd on bd.byty_id = b.url where part like '%$part%' and stav='$stav'";
+            $sql = "select DISTINCT (b.pricetotal-b.price) as pricetotal, bd.vymera, b.url, (b.pricetotal-b.price)/bd.vymera as perm3 from byty b join byty_detaily bd on bd.byty_id = b.url where part like '%$part%' and stav='$stav' and b.pricetotal > 1000";
             
       //  if ($part === "NULL" && $condition === "NULL"){
             if ($part === "NULL") $sql = str_replace("part like '%$part%'", "part is NULL", $sql);

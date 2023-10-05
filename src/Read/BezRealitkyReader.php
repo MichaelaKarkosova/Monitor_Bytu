@@ -71,6 +71,7 @@ class BezRealitkyReader implements ChainableReaderInterface {
                             if ($class === "PropertyPrice_propertyPriceAdditional__5jYQ6")$price = preg_replace('/\D+/', "", $n->textContent);
                             $i++;
                         }
+
                         $finalprice = $rent+$price;
                         $parts = $name;
                         $part = explode(",", $parts)[1];
@@ -96,8 +97,10 @@ class BezRealitkyReader implements ChainableReaderInterface {
                         $finalpart = str_replace(", okres Praha", "", $finalpart);
                         //vrátíme object Apartment
                         $finalpart = str_replace(" Praha - ", "", $finalpart);
+                        $a = new Apartment($href, $name, $href, (int) ($finalprice - $rent), (int) $finalprice, $finalpart, $longpart);
+                        print_r($a);
                         return
-                            new Apartment($href, $name, $href, (int) $rent, (int) $finalprice, $finalpart, $longpart);
+                           $a;
                     });
                 $i++;
                 //nastavíme další stránku na výpisu, která se má projít
@@ -155,7 +158,7 @@ class BezRealitkyReader implements ChainableReaderInterface {
                                 else $condition = str_replace("Stav", "", $condition);
                                 return ["condition" => $condition];
                             }
-                            if (strpos($line->text(), "m²") !== FALSE && strpos($line->text(), "zahrádka") === FALSE && (strpos($line->text(), "Lodžie") === FALSE && strpos($line->text(), "Sklep") === FALSE && strpos($line->text(), "Terasa") === FALSE) && strpos($line->text(), "Balkón") === FALSE) {
+                            if (strpos($line->text(), "m²") !== FALSE && (strpos($line->text(), "zahrádka") === FALSE && (strpos($line->text(), "Lodžie") === FALSE && strpos($line->text(), "Sklep") === FALSE && strpos($line->text(), "Terasa") === FALSE) && strpos($line->text(), "Balkón") === FALSE)) {
                                 $area = $line->text();
                                 $area = preg_replace('/\D+/', "", $area);
                                 return ["area" => (int) $area];
@@ -192,7 +195,7 @@ class BezRealitkyReader implements ChainableReaderInterface {
                                 return ["condition" => $condition];
                             }
                             //nutno vyfiltrovat data o velikosti balkonu, zahrádky, lodžie, sklepa...
-                            if (strpos($line->text(), "m²") !== FALSE && strpos($line->text(), "zahrádka") === FALSE && (strpos($line->text(), "Lodžie") === FALSE && strpos($line->text(), "Sklep") === FALSE && strpos($line->text(), "Terasa") === FALSE) && strpos($line->text(), "Balkón") === FALSE) {
+                            if (strpos($line->text(), "m²") !== FALSE && (strpos($line->text(), "zahrádka") === FALSE && (strpos($line->text(), "Lodžie") === FALSE && strpos($line->text(), "Sklep") === FALSE && strpos($line->text(), "Terasa") === FALSE) && strpos($line->text(), "Balkón") === FALSE)) {
                                 $area = $line->text();
                                 $area = preg_replace('/\D+/', "", $area);
                                 return ["area" => (int) $area];

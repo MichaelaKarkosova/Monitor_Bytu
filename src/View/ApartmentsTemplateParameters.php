@@ -11,4 +11,6 @@ final class ApartmentsTemplateParameters extends TemplateParameters {
 
     public int $count;
 
+    public int $average;
+
 }

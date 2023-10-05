@@ -38,4 +38,6 @@ final class IndexParameters extends TemplateParameters {
     public string $colormode;
 
     public string $totalfilters;
+
+    public int $average;
 }

@@ -37,10 +37,12 @@ class DataRenderer {
         $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         //a vrátíme je
         return $result;
+
     }
 
     public function getActiveFiltersForSmarty(){
         $i = 0;
+    
         $done = false;
         $activefilters = '';
         [$conditions, $binds, $params] = $this->getActiveFilters();
@@ -156,6 +158,7 @@ class DataRenderer {
         //vytáhneme si filtrované byty a předáme je šabloně jako parametr "apartments"
         $templateParams->apartments = $this->getFilteredData();
         $templateParams->colorMode = $this->getColorMode();
+  //      $templateParams->average = "$this->getAverageByType($a, $b)";
         //předáme do templatu parametr stránky
         $templateParams->page = $page;
         $templateParams->http = $http;
@@ -211,8 +214,12 @@ class DataRenderer {
         //a fetchneme všechny výsledky
         $result = $stmt->get_result();
         $apartments = $result->fetch_all(MYSQLI_ASSOC);
-        //a vrátíme výsledky nebo prázdné pole
-            return $apartments ?? [];
+        for ($i = 0; $i < count($apartments); $i++){
+            $apartments[$i]["average"] = $this->getAverageByType( $apartments[$i]["part"],  $apartments[$i]["stav"]);
+        }
+    
+       // print_r($apartments[1]);
+        return $apartments ?? [];
     }
 
     public function getTotalResultsFromFilter(){
@@ -286,6 +293,15 @@ class DataRenderer {
         return $order_s;
     }
 
+    public function getAverageByType($part, $stav){
+        $conn = $this->db->getConnection();
+        $sql = "select averageprice from byty.average where part = ? and stav = ?";
+        $statement = $conn->prepare($sql);
+        $statement->bind_param("ss", $part, $stav);
+        $statement->execute();
+        $res = $statement->get_result()->fetch_all(MYSQLI_ASSOC);  
+        return $res[0]["averageprice"];
+    }
     //tato metoda vrací aktivní filtry
     public function getActiveFilters() : array {
         //filtry získáme z getu

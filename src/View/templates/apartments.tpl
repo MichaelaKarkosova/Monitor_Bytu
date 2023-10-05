@@ -30,20 +30,37 @@
     {else}
         {$balkon = "Neuvedeno"}
     {/if}
+        {$realPerM3 =($item.pricetotal - $item.price)/$item.vymera}
     {if $item.patro === null}
         {$item.patro = "Neuvedeno"}
+    {/if}
+    {if $item.pricetotal - $item.price === 0 || (($realPerM3-$item.average)/$realPerM3*100) == "0"}
+        {$item.value = "Průměrná cena"}
+        {$cssclass = "average"}
+    {elseif $item.average eq "" || $item.stav === null}
+        {$item.value = "Neznámá cena"}
+        {$cssclass = "unknown"}
+    {elseif $item.average < ($item.pricetotal - $item.price)/$item.vymera}
+        {$item.value = "Nadprůměrná cena"}
+        {$cssclass = "high"}
+    {elseif $item.average > ($item.pricetotal - $item.price)/$item.vymera}
+        {$item.value = "Podprůměrná cena"}
+        {$cssclass = "low"}
     {/if}
 
     <div class="container-sm themed-container text-center">
         <h6>Data k: {$item.imported|date_format:"%d. %m. %y, %H:%M"}</h6>
+        <div class="{$cssclass}">
+        <h6 class="inside">{$item.value}  {if $item.value neq "Neznámá cena" && $item.value neq "Průměrná cena"} ({(($realPerM3-$item.average)/$realPerM3*100)|round:2}%){/if}</div></h6>
+        {if $item.value eq "Neznámá cena"}<h5>Pro výpočet ceny musí být vyplněna část i stav. {/if}</h5>
         <h5><b>{$item.name}</b></h5>
         <h6>{$item.part}</h6>
-        <h6>{$item.pricetotal} Kč/měsíc               {if $source=="idnes" or $source=="realityMix"}
+        <h6>{$item.pricetotal} Kč/měsíc {if $source=="idnes" or $source=="realityMix"}
                     <b>(+ poplatky)</b>
                 {/if}</h6>
         <h6>{$item.dispozice}</h6>
         <h6>{$item.vymera} m2</h6>
-                <h6>{$item.vybaveni}</h6>
+        <h6>{$item.vybaveni}</h6>
         <h6 id="distance{$i}">Vzdálenost od centra:  </h6>
         <h6 id="metro{$i}">Nejbližší metro:  </h6>
         <h6><b>Zdroj: </b>{$source}</h6>
@@ -63,7 +80,7 @@
                   <h6> <b>Stav:</b> {$item.stav}</h6>
                 <h6><b>Domácí zvířata: </b>{$zvirata}</h6>
                 <h6><b>Balkon: </b>{$balkon}</h6>
-                <h5><b>Cena: </b>{$item.price} + {$item.pricetotal - $item.price} Kč   </h5>
+                <h5><b>Cena: </b> {$item.pricetotal - $item.price} + {$item.price} Kč   </h5>
                 <a class="url btn btn-primary" href="{$item.url}" target="blank">Podrobnosti</a>
 
             </div>

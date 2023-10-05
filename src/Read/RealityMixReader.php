@@ -93,7 +93,7 @@ class RealityMixReader implements ChainableReaderInterface {
                         $finalpart = str_replace("Praha - ", "", $finalpart);
                         $finalpart = str_replace(", okres Praha", "", $finalpart);
                         //vrátíme object Apartment
-                        $a = new Apartment($href, $name, $href, $rent, $finalprice, $finalpart, $longpart);
+                        $a = new Apartment($href, $name, $href, 0, $rent, $finalpart, $longpart);
                         //  print_r($a);
                         return $a;
                     });

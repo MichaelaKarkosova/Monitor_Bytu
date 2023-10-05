@@ -10,10 +10,29 @@
 .dark >  .title{
 	font-size: 50px;
 	color: #5D6D7E !important;
+
+}
+
+.tooltiptext{
+    width: 40px;
+    height: 40px;
+    background-color: blue;
+}
+div .high:hover .tooltiptext {
+  visibility: visible;
 }
 .btn-secondary{
+    background-color: #0d6efd !important;
+    color: white !important;
     margin: 20px;
 }
+
+
+.dark > .btn-secondary {
+    color: white !important;
+    margin: 20px;
+}
+
 .left{
     position: absolute;
     left: 80%;
@@ -89,10 +108,57 @@ label{
     font-size: 30px;
 }
 
+div .high:after{
+    content: '';
+    background: url(./images/arrow_up.svg);
+    background-size: cover;
+    position: absolute;
+    width: 20px !important;
+    height: 20px !important;
+    margin-left: 120px !important;
+    margin-top: -30px !important;
+}
+
+
+div .low:after{
+    content: '';
+    background: url(./images/arrow_down.svg);
+    background-size: cover;
+    position: absolute;
+    width: 20px !important;
+    height: 20px !important;
+    margin-left: 120px !important;
+    margin-top: -30px !important;
+}
+
+
+div .unknown:after{
+    content: '';
+    background: url(./images/question_mark.svg);
+    background-size: cover;
+    position: absolute;
+    width: 80px !important;
+    height: 80px !important;
+    margin-left: 60px !important;
+    margin-top: -35px !important;
+}
+
+div .average:after{
+    content: '';
+    background: url(./images/average.svg);
+    background-size: cover;
+    position: absolute;
+    width: 20px !important;
+    height: 20px !important;
+    margin-left: 120px !important;
+    margin-top: -30px !important;
+}
+
 
 #areamin{
     width: 70px;
 }
+
 
 #areamax{
     width: 70px;
@@ -252,6 +318,7 @@ a {
     border-color: #6c757d;
 }
 
+
 .dark .btn border{
     border-color: #6c757d; 
 }
@@ -308,7 +375,103 @@ a {
     color: #dedede !important;
 }
 /* desktop */
-@media only screen and (min-width: 768px) {
+@media only screen and (min-width: 1281px) {
+
+div.high{
+    width:40px;
+    display:inline-block;
+    position: absolute;
+    height:20px;
+    color:white;
+    text-decoration:none;
+}
+
+
+div.unknown{
+    width:40px;
+    display:inline-block;
+    position: absolute;
+    height:20px;
+    color:white;
+    text-decoration:none;
+}
+
+.inside{
+    color: black;
+    margin-left: 320px;
+}
+
+.dark .inside{
+    color: white;
+}
+div.high:after{
+    content: '';
+    background:url('./images/arrow_up.svg');
+    background-size:cover;
+        position: absolute !important;
+    width:80px !important;
+    height:80px !important;
+    margin-left: 300px !important;
+    margin-top: 100px !important;
+}
+
+div.low{
+    width: 40px !important;
+    display: inline-block;
+    position: absolute;
+    height: 20px !important;
+    color:white;
+    text-decoration:none;
+}
+div.low:after{
+    content: '';
+    background:url('./images/arrow_down.svg');
+    background-size:cover;
+        position:absolute;
+    width: 80px !important;
+    height:80px !important;
+    margin-left:300px !important;
+    margin-top: 100px !important;
+}
+
+div.unknown{
+    width: 40px !important;
+    display: inline-block;
+    position: absolute;
+    height: 20px !important;
+    color:white;
+    text-decoration:none;
+}
+div.unknown:after{
+    content: '';
+    background:url('./images/question_mark.svg');
+    background-size:cover;
+        position:absolute;
+    width: 160px !important;
+    height:160px !important;
+    margin-left:240px !important;
+    margin-top: 100px !important;
+}
+
+div.average{
+    width:40px;
+    display:inline-block;
+    position: absolute;
+    height:20px;
+    color:white;
+    text-decoration:none;
+}
+div.average:after{
+    content: '';
+    background:url('./images/average.svg');
+    background-size:cover;
+        position: absolute !important;
+    width:80px !important;
+    height:80px !important;
+    margin-left: 300px !important;
+    margin-top: 100px !important;
+}
+
     .myFlex{
         flex-direction: row;
         align-items: flex-start;
@@ -356,5 +519,57 @@ a {
   background-color: #414a4c !important;
 }
 
+/* tablet */
+
+@media only screen and (min-width: 768px) and (max-width: 1281px) { 
+div .high:after{
+
+content: '';
+    background: url(./images/arrow_up.svg);
+    background-size: cover;
+    position: absolute;
+    width: 80px !important;
+    height: 80px !important;
+    margin-left: 200px !important;
+    margin-top: 0px !important;
+}
+
+
+div .low:after{
+    content: '';
+    background: url(./images/arrow_down.svg);
+    background-size: cover;
+    position: absolute;
+    width: 80px !important;
+    height: 80px !important;
+    margin-left: 200px !important;
+    margin-top: 0px !important;
+}
+
+div .unknown:after{
+    content: '';
+    background: url(./images/question_mark.svg);
+    background-size: cover;
+    position: absolute;
+    width: 80px !important;
+    height: 80px !important;
+    margin-left: 200px !important;
+    margin-top: 0px !important;
+}
+
+div .unknown:average{
+    content: '';
+    background: url(./images/question_mark.svg);
+    background-size: cover;
+    position: absolute;
+    width: 80px !important;
+    height: 80px !important;
+    margin-left: 200px !important;
+    margin-top: 0px !important;
+}
+
+.inside{
+    margin-left: 220px;
+}
 
 }
