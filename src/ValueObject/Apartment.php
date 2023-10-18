@@ -18,11 +18,11 @@ class Apartment {
 
     public function __construct(?string $id, ?string $name, ?string $url, ?int $price, ?int $pricetotal, ?string $part, ?string $longpart){
         $this->id = $id;
+        $this->name = $name;
         $this->url = $url;
         $this->price = $price;
-        $this->name = $name;
-        $this->part = $part;
         $this->pricetotal = $pricetotal;
+        $this->part = $part;
         $this->longpart = $longpart;
     }
 }

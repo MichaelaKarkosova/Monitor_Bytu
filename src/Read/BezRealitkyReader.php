@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 namespace App\Read;
-
+date_default_timezone_set("Europe/Prague");
 use App\database;
 use App\ValueObject\Apartment;
 use App\ValueObject\Apartment_detailed;
@@ -122,7 +122,7 @@ class BezRealitkyReader implements ChainableReaderInterface {
         $db = $this->db->getConnection();
         $apartments_all = [];
         //vybereme jen vyety ze zdroje bezrealitky
-        $allapartments = $db->query("select * from byty where url like '%bezrealitky%'")->fetch_all(MYSQLI_ASSOC);
+        $allapartments = $db->query("select * from byty where url like '%bezrealitky%' and DATE(imported) = DATE(NOW())")->fetch_all(MYSQLI_ASSOC);
         //projdeme všechny byty z databáze
         foreach ($allapartments as $a) {
             //vytáhneme data z url detailu bytu

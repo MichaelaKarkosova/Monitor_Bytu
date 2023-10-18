@@ -1,9 +1,7 @@
 <?php
-
 declare(strict_types=1);
-
 namespace App\Read;
-
+date_default_timezone_set("Europe/Prague");
 use App\database;
 use App\Command\ReadCommand;
 use App\Read\ChainableReaderInterface;
@@ -105,7 +103,7 @@ class idnesReader implements ChainableReaderInterface
         $appartments_d = [];
         $db = $this->db->getConnection();
         //vytáhneme všechny idnes adresy na detaily z databáze
-        $allapartments = $db->query("select * from byty where url like '%idnes%'");
+        $allapartments = $db->query("select * from byty where url like '%idnes%' and DATE(imported) = DATE(NOW())");
         foreach ($allapartments as $a) {
             $html = @file_get_contents($a["url"]);
 

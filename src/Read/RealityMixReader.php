@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 namespace App\Read;
-
+date_default_timezone_set("Europe/Prague");
 use App\database;
 use App\ValueObject\Apartment;
 use App\ValueObject\Apartment_detailed;
@@ -116,7 +116,7 @@ class RealityMixReader implements ChainableReaderInterface {
         $db = $this->db->getConnection();
         $apartments_all = [];
         //vybereme jen byty ze zdroje realitymix
-        $allapartments = $db->query("select url, imported from byty where url like '%realitymix%'")->fetch_all(MYSQLI_ASSOC);
+        $allapartments = $db->query("select url, imported from byty where url like '%realitymix%' and DATE(imported) = DATE(NOW())")->fetch_all(MYSQLI_ASSOC);
         //projdeme všechny byty z databáze
         foreach ($allapartments as $a) {
             //vytáhneme data z url detailu bytu

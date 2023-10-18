@@ -13,6 +13,7 @@ use App\Database;
 use App\Notification\ApartmentsNotifierInterface;
 use App\ValueObject\ApartmentsResult;
 use DateTime;
+use Date;
 use DateTimeZone;
 
 class DataWriter implements WriterInterface {
@@ -30,7 +31,7 @@ class DataWriter implements WriterInterface {
         echo "Writing apartments...";
         $newUrls = [];
         $foundUrls = [];
-        $imported = (new DateTime('now', new DateTimeZone('UTC')))->format('Y-m-d H:i:s');
+        $imported = (new DateTime('now', new DateTimeZone('+0200')))->format('Y-m-d H:i:s');
         $data = [];
         //query, co vybírá všechny byty z idnesu
         $getExisting = "select url, imported from byty where url like '%" . $reader->type . "%'";
@@ -59,20 +60,20 @@ class DataWriter implements WriterInterface {
                 $stmt2->execute();
             }
             else {
-                $sql = "insert IGNORE into byty (id, name, url, price, pricetotal, part, longpart, imported) values (?, ?, ?, ?, ?, ?, ?, ?)";
+                $sql = "insert into byty (id, name, url, price, pricetotal, part, longpart, imported, first) values (?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 $stmt2 = $this->db->getConnection()->prepare($sql);
-                $bindparams = [$apartment->id, $apartment->name, $apartment->url, $apartment->price, $apartment->pricetotal, $apartment->part, $apartment->longpart, $imported];
-                $stmt2->bind_param("sssiisss", ...array_values($bindparams));
+                $bindparams = [$apartment->id, $apartment->name, $apartment->url, $apartment->price, $apartment->pricetotal, $apartment->part, $apartment->longpart, $imported, $imported];
+                $stmt2->bind_param("sssiissss", ...array_values($bindparams));
                 $stmt2->execute();
                 //přidáme do pole nových bytů
                 $newUrls[] = $apartment->id;
-                //zapíšeme cenu
-                $this->writePrice($apartment->url, $apartment->price, $apartment->pricetotal, $apartment->part, $imported);
             }
+                                //zapíšeme cenu
+        $this->writePrice($apartment->url, $apartment->price, $apartment->pricetotal, $apartment->part, $imported);
             //přidáme do pole všech bytů
             $foundUrls[] = $apartment->id;
         }
-        $this->populateAverage();
+        //$this->populateAverage();
         //pokud jsou nějaké nové byty, pošleme notifikaci
         if (count($newUrls) > 0){
             $this->apartmentsNotifier->notify($newUrls);
@@ -82,6 +83,7 @@ class DataWriter implements WriterInterface {
 
     //zde zapíšeme detaily do databáze - přijdou sem detaily jednoho bytu
     public function WriteDetails(array $values): void {
+        print_r($values);
         echo "Writing details...";
         //projdeme pole dat a vložíme vše do databáze
         foreach ($values as $v) {
@@ -108,17 +110,33 @@ class DataWriter implements WriterInterface {
                 $stmt->bind_param("sssisssis", ...array_values((array) $v));
                 $stmt->execute();
             }
+             $this->updatePrice($v->condition, $v->area, $v->size, $v->furniture, $v->id);
         }
     }
     //zápis do tabulky, kde jsou historie cen
     public function writePrice(string $url, ?float $price, ?float $pricetotal, ?string $part, string $date){
         $db = $this->db->getConnection();
+        print_r($url);
         $sql = "insert into ceny(url, price, pricetotal, part, date) values (?, ?, ?, ?, ?)";
         $stmt = $db->prepare($sql);
         $stmt->bind_param("siiss", $url, $price, $pricetotal, $part, $date);
         $stmt->execute();
     }
 
+    public function updatePrice(?string $conditionArg, ?int $areaArg, ?string $sizeArg, ?string $furnitureArg, string $id){
+        print_r("!!!!! UPDATING PRICE !!!!!");
+        $condition = $conditionArg ?? NULL;
+        $size = $sizeArg ?? NULL;
+        $condition = $furnitureArg ?? NULL;
+        $area = $areaArg ?? NULL;
+        $furniture = $furnitureArg ?? NULL;
+        $db = $this->db->getConnection();
+        echo "$condition, $area, $size, $furniture, $id";
+        $sql = "update ceny set stav = ?, area = ?, size = ?, furniture = ? where url = ? and DATE(date) = DATE(NOW())";
+        $stmt = $db->prepare($sql);
+        $stmt->bind_param("sisss", $condition, $area, $size, $furniture, $id);
+        $stmt->execute();
+    }
 
 
     public function populateAverage(){
@@ -138,14 +156,12 @@ class DataWriter implements WriterInterface {
                 $condition = $c[0];
                 if ($condition == "") $condition = "NULL";
               $average =  $this->getPerM2($part, $condition);
-              print_r("!!!!!!!!!!!!!!!".var_export($average[1]));
               if ($average[1] == false || $average[0] === 0 ||  $average[0] === "0") continue;
                             print_r($average);
               $query = "insert into byty.average (part, stav, averageprice) values (?, ?, ?)";
               $stmt2 = $db->prepare($query);
               // print_r([$part, $condition, $average[0]]);
               $stmt2->bind_param("ssi", $part, $condition, $average[0]);
-              print_r("INSERTING");
               $stmt2->execute();
              $jsondata =
                 array("part" => $part,
@@ -177,33 +193,20 @@ class DataWriter implements WriterInterface {
     }
     
     public function getPerM2($part, $stav, $sum = 0){
-  //      print_r("select DISTINCT b.pricetotal, bd.vymera, b.url, b.pricetotal/bd.vymera as perm3 from byty b join byty_detaily bd on bd.byty_id = b.url where part like '%$part%' and stav=$stav");
             $db_c = $this->db->getConnection();
-        //select DISTINCT b.pricetotal, bd.vymera, b.url, b.pricetotal/bd.vymera as perm3 from byty b join byty_detaily bd on bd.byty_id = b.url where part like "%Holešovice%" and stav="Dobrý" limit 10;
             $sql = "select DISTINCT (b.pricetotal-b.price) as pricetotal, bd.vymera, b.url, (b.pricetotal-b.price)/bd.vymera as perm3 from byty b join byty_detaily bd on bd.byty_id = b.url where part like '%$part%' and stav='$stav' and b.pricetotal > 1000";
-            
-      //  if ($part === "NULL" && $condition === "NULL"){
             if ($part === "NULL") $sql = str_replace("part like '%$part%'", "part is NULL", $sql);
             if ($stav === "NULL") $sql = str_replace("stav like '%$stav%'", "stav is NULL", $sql);
             $stmt = $db_c->prepare($sql);
             $stmt->execute();
-        //vezmeme výsledky sql
+            //vezmeme výsledky sql
             $res = $stmt->get_result();
             $result = $res->fetch_all();
             $count = mysqli_num_rows($res);
-                          //          $sum = 0;
-           // print_r($result);
             foreach ($result as $row){
                 $sum = $sum+(int) $row[3];
-               // print_r($row["perm3"];);
             }
-        
-                        if ($count < 1 ) return [0, false];
-                        print_r("Počet je $count");
-       //     $rows = $result->fetch_row();
-           print_r($result);
-            //print_r($sum);
-           // print_r("SUM: ".$sum/mysqli_num_rows($result));
+            if ($count < 1 ) return [0, false];
             return [$sum/$count, true];
     }
 }
