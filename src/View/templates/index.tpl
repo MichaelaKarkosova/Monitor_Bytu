@@ -49,7 +49,6 @@
                 <br>
                             <div class="active-filters text-center"> Použité filtry: {rawurldecode($totalfilters)} </div><br>
 
-
         {if count($apartments) eq 0}
             {include file="error.tpl"}
         {else}

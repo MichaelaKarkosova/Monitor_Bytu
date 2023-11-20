@@ -100,7 +100,7 @@ class DataRenderer {
 
     public function getAvailableSources(){
         $db = $this->db->getConnection();
-        $sources = ['bezrealitky', 'idnes', 'realitymix'];
+        $sources = ['bezrealitky', 'sreality', 'realitymix'];
         $allsources = [];
         foreach ($sources as $s){
             $sql = 'select count(*) from byty_detaily where byty_id like "%'.$s.'%"';
@@ -145,7 +145,9 @@ class DataRenderer {
         $templateParams->source = $this->getAvailableSources();
         $templateParams->furniture = $this->getDataFromDb("vybaveni", 1);
         $templateParams->animals = $this->getDataFromDb("zvirata", 1);
-        $templateParams->imported = $this->getDataFromDb("DATE_ADD(imported,interval 2 hour)", 0);
+        $templateParams->imported = $this->getDataFromDb("DATE_SUB(imported, INTERVAL 1 HOUR)", 0);
+        $templateParams->first = $this->getDataFromDb("first", 0);
+
         //vytáhneme z výpisu bytů informaci o přítomnosti balkonu a předáme ji do templatu jako parametr "balcony"
         $templateParams->balcony = $this->getDataFromDb("balkon", 1);
         $templateParams->count= $countall;
@@ -197,10 +199,10 @@ class DataRenderer {
 
             //nastavíme where podmínku pomocí všech podmínek
             $where = empty($conditions) ? '' : ('WHERE ' . implode(' AND ', $conditions));
-            $sql = "select b.id, b.longpart, b.part, bd.balkon, b.pricetotal, b.part, bd.dispozice, bd.vymera, bd.zvirata, bd.patro, bd.vybaveni, bd.vytah, bd.stav, b.price, b.url, b.name, b.imported from byty b join byty_detaily bd on bd.byty_id=b.id " . $where . " order by " . $order_s . $limit;
+            $sql = "select b.id, b.longpart, b.part, bd.balkon, b.pricetotal, b.part, bd.dispozice, bd.vymera, bd.zvirata, bd.patro, bd.vybaveni, bd.vytah, bd.stav, b.price, b.url, b.name, b.first, b.imported from byty b join byty_detaily bd on bd.byty_id=b.id " . $where . " order by " . $order_s . $limit;
             }
          else {
-             $sql = "select b.id, b.part, b.longpart, b.pricetotal, bd.balkon, b.part, bd.dispozice, bd.vymera, bd.zvirata, bd.patro, bd.vybaveni, bd.vytah, bd.stav, b.price, b.url, b.name, b.imported from byty b join byty_detaily bd on bd.byty_id=b.id order by pricetotal". $limit;
+             $sql = "select b.id, b.part, b.longpart, b.pricetotal, bd.balkon, b.part, bd.dispozice, bd.vymera, bd.zvirata, bd.patro, bd.vybaveni, bd.vytah, bd.stav, b.price, b.url, b.name, b.first, b.imported from byty b join byty_detaily bd on bd.byty_id=b.id order by pricetotal". $limit;
          }
          //pro jistotu znova zkontrolujeme, zda jsou filtry aktivní
         $stmt = $db->prepare($sql);
@@ -239,10 +241,10 @@ class DataRenderer {
             $params = $this->decodeFilters($params);
             //nastavíme where podmínku pomocí všech podmínek
             $where = empty($conditions) ? '' : ('WHERE ' . implode(' AND ', $conditions));
-            $sql = "select b.id, b.longpart, b.part, bd.balkon, b.pricetotal, b.part, bd.dispozice, bd.vymera, bd.zvirata, bd.patro, bd.vybaveni, bd.vytah, bd.stav, b.price, b.url, b.name, b.imported from byty b join byty_detaily bd on bd.byty_id=b.id " . $where . " order by " . $order_s;
+            $sql = "select b.id, b.longpart, b.part, bd.balkon, b.pricetotal, b.part, bd.dispozice, bd.vymera, bd.zvirata, bd.patro, bd.vybaveni, bd.vytah, bd.stav, b.price, b.url, b.name, b.first, b.imported from byty b join byty_detaily bd on bd.byty_id=b.id " . $where . " order by " . $order_s;
             }
          else {
-             $sql = "select b.id, b.part, b.longpart, b.pricetotal, bd.balkon, b.part, bd.dispozice, bd.vymera, bd.zvirata, bd.patro, bd.vybaveni, bd.vytah, bd.stav, b.price, b.url, b.name, b.imported from byty b join byty_detaily bd on bd.byty_id=b.id order by pricetotal";
+             $sql = "select b.id, b.part, b.longpart, b.pricetotal, bd.balkon, b.part, bd.dispozice, bd.vymera, bd.zvirata, bd.patro, bd.vybaveni, bd.vytah, bd.stav, b.price, b.url, b.name, b.first, b.imported from byty b join byty_detaily bd on bd.byty_id=b.id order by pricetotal";
          }
          //pro jistotu znova zkontrolujeme, zda jsou filtry aktivní
         $stmt = $db->prepare($sql);
@@ -286,6 +288,12 @@ class DataRenderer {
                 break;
             case "old":
                 $order_s = 'imported asc';
+                break;
+            case "firstnew":
+                $order_s = 'first desc';
+                break;
+            case "firstlast":
+                $order_s = 'first asc';
                 break;
             default:
                 $order_s = 'pricetotal';

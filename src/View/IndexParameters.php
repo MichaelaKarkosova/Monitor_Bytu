@@ -23,6 +23,8 @@ final class IndexParameters extends TemplateParameters {
 
     public array $imported;
 
+    public array $first;
+
     public int $sum;
 
     public int $count;

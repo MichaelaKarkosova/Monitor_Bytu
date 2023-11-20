@@ -21,13 +21,14 @@
                 <label for="order">Řadit podle</label>
                         <form type="GET">
                 <select name="order" id="order">
-                    <option value="new" {if $order eq "new"}selected {/if}>Od nejnovějšího</option>
-                    <option value="old" {if $order eq "old"}selected {/if}>Od nejstaršího</option>
+                    <option value="new" {if $order eq "new"}selected {/if}>Nedávno aktualizováno</option>
                     <option value="cheap" {if $order eq "cheap"}selected="selected"{/if}>Od nejlevnějšího</option>
                     <option value="expensive"{if $order eq "expensive"}selected="selected"{/if}>Od nejdražšího</option>
                     <option value="part" {if $order eq "part"}selected{/if}>Mětské části</option>
                     <option value="areamin" {if $order eq "areamin"}selected {/if}>Od nejmenšího</option>
                     <option value="areamax" {if $order eq "areamax"}selected {/if}>Od největšího</option>
+                    <option value="firstnew" {if $order eq "firstnew"}selected {/if}>Od nejnovějšího</option>
+                    <option value="firstlast" {if $order eq "firstlast"}selected {/if}>Od nejstaršího</option>
                 </select>
                 <div class="list-group-item list-group-item-action py-3 lh-sm">
                     <div class="d-flex w-450 align-items-center justify-content-between">

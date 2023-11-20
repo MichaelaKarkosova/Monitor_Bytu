@@ -37,26 +37,30 @@ class idnesReader implements ChainableReaderInterface
         $finalapartments = [];
         do {
             //sleep nám pomáhá získat data tak, aby nedošlo k timeoutu ze strany idnesu
-            sleep(15);
+            sleep(25);
             //vytáhneme obsah webu
             try{
+                $proxy = 'https://43.157.105.92:8888';
                 $client = new \GuzzleHttp\Client(['headers' => [
                     'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
                     'Accept-Language' => 'en-US,en;q=0.9',
                     'Accept-Encoding' => 'gzip, deflate, br',
                     'Referer' => $source,
-                    'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'],
+                    'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                    'proxy' => $proxy,
+                    ],
                 ]);
             }
-            catch (exception $e){
+            catch (Exception $e){
                 echo $e;
             }
-            $request = $client->get($source);
+            $request = $client->get($source,  ['debug' => true]);
             $html = (string) $request->getBody();
             $crawler = new Crawler($html);
             //projdeme všechny dlaždice s byty a jednotlivé prvky v nich
             $apartments = $crawler->filter('.c-products__list .c-products__item article a.c-products__link')
                 ->each(static function (Crawler $item) use ($source): apartment {
+                                sleep(25);
                     //zjistíme url na detail bytu
                     [$href, $text] = $item->extract(['href', '_text'])[0];
                     //zjistíme cenu bytu
