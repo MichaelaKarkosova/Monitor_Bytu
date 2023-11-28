@@ -170,7 +170,7 @@ class idnesReader implements ChainableReaderInterface
                 $stairs = (int) preg_replace('/\D+/', "", $stairs);
             }
             //vytvoříme nový objekt a přidáme ho do pole detailů
-            $thisapartment = new Apartment_detailed($url, (bool) $animals ?? NULL, $furniture ?? NULL, (bool) $elevator ?? NULL, (int) $stairs ?? NULL, $condition ?? NULL, $size ?? NULL, (bool) $balcony ?? NULL, (int) $area ?? NULL);
+            $thisapartment = new Apartment_detailed($url, (bool) $animals ?? NULL, $furniture ?? NULL, (bool) $elevator ?? NULL, (int) $stairs ?? NULL, $condition ?? NULL, $size ?? NULL, (bool) $balcony ?? NULL, (int) $area ?? NULL, NULL);
             $appartments_d[] = $thisapartment;
         }
         //a celé pole vrátíme

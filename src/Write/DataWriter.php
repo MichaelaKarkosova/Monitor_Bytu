@@ -78,13 +78,16 @@ class DataWriter implements WriterInterface {
         if (count($newUrls) > 0){
             $this->apartmentsNotifier->notify($newUrls);
         }
+        //we need to recalculate after EVERY write to keep average actual.
+        $this->populateAverage();
 
     }
 
     //zde zapíšeme detaily do databáze - přijdou sem detaily jednoho bytu
     public function WriteDetails(array $values): void {
+        $toUpdate = [];
         print_r($values);
-        echo "Writing details...";
+        print_r("Writing details...");
         //projdeme pole dat a vložíme vše do databáze
         foreach ($values as $v) {
          //replacneme stav v condition, normalizujeme string - oprava bugu, kdy někdy přišlo ve výsledku "ý" a jindy unicode znaky 0079 + 0301
@@ -105,13 +108,23 @@ class DataWriter implements WriterInterface {
                 }
 
                 $db = $this->db->getConnection();
-                $sql = "insert IGNORE into byty_detaily (byty_id, zvirata, vybaveni, patro, stav, dispozice, balkon, vymera, vytah) values (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                $sql = "insert IGNORE into byty_detaily (byty_id, zvirata, vybaveni, patro, stav, dispozice, balkon, vymera, vytah, images) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 $stmt = $db->prepare($sql);
-                $stmt->bind_param("sssisssis", ...array_values((array) $v));
+                $stmt->bind_param("sssisssiss", ...array_values((array) $v));
                 $stmt->execute();
             }
-             $this->updatePrice($v->condition, $v->area, $v->size, $v->furniture, $v->id);
+
+             $toUpdate[] = [
+                "condition" => $v->condition, 
+                "area" => $v->area,
+                "size" => $v->size, 
+                "furniture" => $v->furniture,
+                "id" => $v->id];
         }
+        foreach ($toUpdate as $key=>$value){
+            $this->updatePrice($value["condition"], $value["area"], $value["size"], $value["furniture"], $value["id"]);
+        }
+
     }
     //zápis do tabulky, kde jsou historie cen
     public function writePrice(string $url, ?float $price, ?float $pricetotal, ?string $part, string $date){
@@ -131,7 +144,6 @@ class DataWriter implements WriterInterface {
         $area = $areaArg ?? NULL;
         $furniture = $furnitureArg ?? NULL;
         $db = $this->db->getConnection();
-        echo "$condition, $area, $size, $furniture, $id";
         $sql = "update ceny set stav = ?, area = ?, size = ?, furniture = ? where url = ? and DATE(date) = DATE(NOW())";
         $stmt = $db->prepare($sql);
         $stmt->bind_param("sisss", $condition, $area, $size, $furniture, $id);
@@ -145,9 +157,7 @@ class DataWriter implements WriterInterface {
         $stmt = $db->prepare($sql);
         $stmt->execute();
         $conditions = $this->getAllOf("stav", true);
-                $parts = $this->getAllOf("part");
-        //var_export($conditions);
-        //var_export($parts);
+        $parts = $this->getAllOf("part");
         unlink("data.json");
         foreach ($parts as $key=>$p){
             foreach ($conditions as $key=>$c){
@@ -168,7 +178,6 @@ class DataWriter implements WriterInterface {
                     "condition" => $condition,
                         "average" => $average[0]
                     );
-                    //$this->putIntoJson(json_encode($jsondata));
             }
         }
 
