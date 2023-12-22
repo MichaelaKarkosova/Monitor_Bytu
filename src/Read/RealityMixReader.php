@@ -122,11 +122,19 @@ class RealityMixReader implements ChainableReaderInterface {
             //vytáhneme data z url detailu bytu
             $crawler = new Crawler(file_get_contents($a["url"]));
             $url= $a["url"];
+            $mainimage =  $crawler->filter('.advert-layout__gallery-wrapper .gallery__main-img > a > img')->extract(['src']);
+            $visibleImages = $crawler->filter('.advert-layout__gallery-wrapper .gallery__small-img .gallery__item--image > a > img')->extract(['src']);
+            $hiddenImages = $crawler->filter('.advert-layout__gallery-wrapper .gallery__small-img .gallery__hidden-items > a.gallery__item')->extract(['href']);
+            $links[$url] = [...$visibleImages, ...$hiddenImages, ...$mainimage];
+
+           // print_r( $links[$url] );
+          //  print_r($crawler->filter('.advert-layout__gallery-wrapper > .gallery > .gallery__items > div > a > img'));
             $apartments_all[] = $crawler->filter('.advert-layout__information-wrapper')
-                ->each(function (Crawler $item) use ($url): Apartment_detailed {
+                ->each(function (Crawler $item) use ($url, $links): Apartment_detailed {
                     //uložíme si poznámku
                     $poznamka = $item->filter("div > div")->text();
                     //projdeme všechny <li> tagy az  nich vytáhneme data - první tabulka
+
                     $data = $item->filter('div:nth-child(3) > div > ul > li')
                         ->each(static function (Crawler $line) use ($poznamka): ?array {
                             if (strpos($line->text(), "Číslo podlaží v domě: ") !== FALSE) {
@@ -191,8 +199,9 @@ class RealityMixReader implements ChainableReaderInterface {
                             return ["animals" => $animals, "furniture" => $furniture, "balcony" => (bool) $balcony, 'elevator' =>  (bool)  $elevator];
                         });
                     //přidáme fetchnutá data do pole, které obsahuje data obou tabulek. pokud se hodnota nevrátila - např. ji zadavatel bytu nevyplnil, vrátíme prázdný string.
+                    $images = json_encode($links[$url]);
                     $alldata = array_merge(...array_values(array_filter($data)),...array_values(array_filter($data2)));
-                    $ap_d =  new Apartment_detailed($url , $alldata["animals"] ?? NULL, $alldata["furniture"] ?? NULL, $alldata["elevator"] ?? false, $alldata["stairs"] ?? NULL, $alldata["condition"] ?? NULL, $alldata["size"] ?? NULL, $alldata["balcony"] ?? false, $alldata["area"] ?? NULL);
+                    $ap_d =  new Apartment_detailed($url , $alldata["animals"] ?? NULL, $alldata["furniture"] ?? NULL, $alldata["elevator"] ?? false, $alldata["stairs"] ?? NULL, $alldata["condition"] ?? NULL, $alldata["size"] ?? NULL, $alldata["balcony"] ?? false, $alldata["area"] ?? NULL, $images ?? NULL);
                     return $ap_d;
                 });
         }

@@ -8,8 +8,8 @@
     margin-bottom: 20px;
 }
 .dark >  .title{
-	font-size: 50px;
-	color: #5D6D7E !important;
+    font-size: 50px;
+    color: #5D6D7E !important;
 
 }
 
@@ -44,13 +44,13 @@ padding: 10px;
 margin-bottom: 0px;
 }
 label{
-	font-size: 15px;
+    font-size: 15px;
 }
 
     .half{
         width:50% !important;
     }
-	
+    
   
     .fixed-filters{
     display: flex;
@@ -60,12 +60,12 @@ label{
     width: 100% !important;
 
     }
-	
-	.title{
-		font-size: 25px;
-		top: -5px;
+    
+    .title{
+        font-size: 25px;
+        top: -5px;
         flex: 1 1 0;
-	}
+    }
     .half{
         width:50% !important;
     }
@@ -76,12 +76,12 @@ label{
         width: 100% !important;
     }
 
-	.active-filters{
+    .active-filters{
     top: 8%;
     color: white;
    
     }
-	
+    
 
     .themed-container{
         width: 90% !important;
@@ -132,6 +132,9 @@ div .low:after{
 }
 
 
+.carousel-inner img {
+  margin: auto;
+}
 div .unknown:after{
     content: '';
     background: url(./images/question_mark.svg);
@@ -187,6 +190,16 @@ body{
     background-color: #E8EAEC !important;
 }
 
+.sliderimage {
+  height: 400px;
+  width: 100%;
+}
+
+.sliderimage img {
+  max-height: 100%;
+}
+
+
 .count-filtered{
     color: white;
     font-size: 23px;
@@ -201,7 +214,7 @@ body{
 
 
 
-	  .active-filters{
+      .active-filters{
     padding-left: 10px;
     padding-right: 10px;
         color: black;
@@ -294,6 +307,10 @@ body.dark{
     border-color: #6c757d;
 }
 
+.carousel.center{
+    margin-left: calc(27%);
+    padding-bottom: 1%;
+}
 .dark .footer{
     background-color: #414146!important;
     color: #dedede !important;
@@ -412,7 +429,7 @@ div.high:after{
     width:80px !important;
     height:80px !important;
     margin-left: 300px !important;
-    margin-top: 100px !important;
+    margin-top: 40px !important;
 }
 
 div.low{
@@ -431,7 +448,7 @@ div.low:after{
     width: 80px !important;
     height:80px !important;
     margin-left:300px !important;
-    margin-top: 100px !important;
+    margin-top: 30px !important;
 }
 
 div.unknown{
@@ -450,7 +467,7 @@ div.unknown:after{
     width: 160px !important;
     height:160px !important;
     margin-left:240px !important;
-    margin-top: 100px !important;
+    margin-top: 30px !important;
 }
 
 div.average{
@@ -468,8 +485,8 @@ div.average:after{
         position: absolute !important;
     width:80px !important;
     height:80px !important;
-    margin-left: 300px !important;
-    margin-top: 100px !important;
+    margin-left: 290px !important;
+    margin-top: 50px !important;
 }
 
     .myFlex{
@@ -571,5 +588,6 @@ div .unknown:average{
 .inside{
     margin-left: 220px;
 }
+
 
 }

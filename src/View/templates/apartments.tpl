@@ -57,11 +57,11 @@
 
     <div class="container-sm themed-container text-center">
         {if $item.first}<h5>Inzerát vložen: {$item.first|date_format:"%d. %m. %y, %H:%M"}</h6>{/if}
+                <h2><b>{$item.name}</b></h2>
         <h6>Poslední aktualizace: {$item.imported|date_format:"%d. %m. %y, %H:%M"}</h6>
         <div class="{$cssclass}">
         <h6 class="inside">{$item.value}  {if $item.value neq "Neznámá cena" && $item.value neq "Průměrná cena"} ({(($realPerM3-$item.average)/$realPerM3*100)|round:2}%){/if}</div></h6>
         {if $item.value eq "Neznámá cena"}<h5>Pro výpočet ceny musí být vyplněna část i stav. {/if}</h5>
-        <h5><b>{$item.name}</b></h5>
         <h6>{$item.part}</h6>
         <h6>{$item.pricetotal} Kč/měsíc {if $source=="sreality" or $source=="realityMix"}
                     <b>(+ poplatky)</b>
@@ -69,10 +69,34 @@
         <h6>{$item.dispozice}</h6>
         <h6>{$item.vymera} m2</h6>
         <h6>{$item.vybaveni}</h6>
+ 
+
         <h6 id="distance{$i}">Vzdálenost od centra:  </h6>
         <h6 id="metro{$i}">Nejbližší metro:  </h6>
         <h6><b>Zdroj: </b>{$source}</h6>
-    
+          {$count = $item.images|@count}
+         {if $count > 1}
+        <div id="carouselController{$i}" class="carousel center slide w-50" data-bs-ride="carousel">
+            <div class="carousel-inner">
+            {$imageID = 1}
+            {foreach $item.images as $image}
+             <div class="carousel-item {if $imageID eq 1}active{/if} sliderimage">
+                <img src="{$image}" class="d-block">
+            </div>
+            {$imageID = $imageID+1}
+            {/foreach}
+           
+
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#carouselController{$i}" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carouselController{$i}" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+        </button>
+        </div> {/if}
         <p>
 
             <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{$i}" aria-expanded="false" aria-controls="collapseExample">

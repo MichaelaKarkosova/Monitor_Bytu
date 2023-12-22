@@ -147,7 +147,14 @@ class DataRenderer {
         $templateParams->animals = $this->getDataFromDb("zvirata", 1);
         $templateParams->imported = $this->getDataFromDb("DATE_SUB(imported, INTERVAL 1 HOUR)", 0);
         $templateParams->first = $this->getDataFromDb("first", 0);
+        $data = $this->getDataFromDb("images", 1);
 
+        foreach ($data as $index => $row) {
+            $images = $data[$index]['images'];
+            $images = null === $images ? [] : json_decode($images, true);
+            $data[$index]['images'] = $images;
+        }
+        $templateParams->images = $data;
         //vytáhneme z výpisu bytů informaci o přítomnosti balkonu a předáme ji do templatu jako parametr "balcony"
         $templateParams->balcony = $this->getDataFromDb("balkon", 1);
         $templateParams->count= $countall;
@@ -199,10 +206,10 @@ class DataRenderer {
 
             //nastavíme where podmínku pomocí všech podmínek
             $where = empty($conditions) ? '' : ('WHERE ' . implode(' AND ', $conditions));
-            $sql = "select b.id, b.longpart, b.part, bd.balkon, b.pricetotal, b.part, bd.dispozice, bd.vymera, bd.zvirata, bd.patro, bd.vybaveni, bd.vytah, bd.stav, b.price, b.url, b.name, b.first, b.imported from byty b join byty_detaily bd on bd.byty_id=b.id " . $where . " order by " . $order_s . $limit;
+            $sql = "select b.id, b.longpart, b.part, bd.balkon, b.pricetotal, b.part, bd.dispozice, bd.vymera, bd.zvirata, bd.patro, bd.vybaveni, bd.vytah, bd.stav, b.price, b.url, b.name, b.first, bd.images, b.imported from byty b join byty_detaily bd on bd.byty_id=b.id " . $where . " order by " . $order_s . $limit;
             }
          else {
-             $sql = "select b.id, b.part, b.longpart, b.pricetotal, bd.balkon, b.part, bd.dispozice, bd.vymera, bd.zvirata, bd.patro, bd.vybaveni, bd.vytah, bd.stav, b.price, b.url, b.name, b.first, b.imported from byty b join byty_detaily bd on bd.byty_id=b.id order by pricetotal". $limit;
+             $sql = "select b.id, b.part, b.longpart, b.pricetotal, bd.balkon, b.part, bd.dispozice, bd.vymera, bd.zvirata, bd.patro, bd.vybaveni, bd.vytah, bd.stav, b.price, b.url, b.name, bd.images, b.first, b.imported from byty b join byty_detaily bd on bd.byty_id=b.id order by pricetotal". $limit;
          }
          //pro jistotu znova zkontrolujeme, zda jsou filtry aktivní
         $stmt = $db->prepare($sql);
@@ -218,9 +225,9 @@ class DataRenderer {
         $apartments = $result->fetch_all(MYSQLI_ASSOC);
         for ($i = 0; $i < count($apartments); $i++){
             $apartments[$i]["average"] = $this->getAverageByType( $apartments[$i]["part"],  $apartments[$i]["stav"]);
+            $apartments[$i]["images"] = null === $apartments[$i]["images"] ? [] : json_decode($apartments[$i]["images"], true);
         }
-    
-       // print_r($apartments[1]);
+
         return $apartments ?? [];
     }
 
@@ -241,10 +248,10 @@ class DataRenderer {
             $params = $this->decodeFilters($params);
             //nastavíme where podmínku pomocí všech podmínek
             $where = empty($conditions) ? '' : ('WHERE ' . implode(' AND ', $conditions));
-            $sql = "select b.id, b.longpart, b.part, bd.balkon, b.pricetotal, b.part, bd.dispozice, bd.vymera, bd.zvirata, bd.patro, bd.vybaveni, bd.vytah, bd.stav, b.price, b.url, b.name, b.first, b.imported from byty b join byty_detaily bd on bd.byty_id=b.id " . $where . " order by " . $order_s;
+            $sql = "select b.id, b.longpart, b.part, bd.balkon, b.pricetotal, b.part, bd.dispozice, bd.vymera, bd.zvirata, bd.patro, bd.vybaveni, bd.vytah, bd.stav, bd.images, b.price, b.url, b.name, b.first, b.imported from byty b join byty_detaily bd on bd.byty_id=b.id " . $where . " order by " . $order_s;
             }
          else {
-             $sql = "select b.id, b.part, b.longpart, b.pricetotal, bd.balkon, b.part, bd.dispozice, bd.vymera, bd.zvirata, bd.patro, bd.vybaveni, bd.vytah, bd.stav, b.price, b.url, b.name, b.first, b.imported from byty b join byty_detaily bd on bd.byty_id=b.id order by pricetotal";
+             $sql = "select b.id, b.part, b.longpart, b.pricetotal, bd.balkon, b.part, bd.dispozice, bd.vymera, bd.zvirata, bd.patro, bd.vybaveni, bd.vytah, bd.stav, b.price, bd.images, b.url, b.name, b.first, b.imported from byty b join byty_detaily bd on bd.byty_id=b.id order by pricetotal";
          }
          //pro jistotu znova zkontrolujeme, zda jsou filtry aktivní
         $stmt = $db->prepare($sql);

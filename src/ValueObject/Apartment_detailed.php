@@ -32,7 +32,9 @@ class Apartment_detailed {
 
     public ?bool $elevator;
 
-    public function __construct(string $id, ?bool $animals, ?string $furniture, ?bool $elevator, ?int $stairs, ?string $condition, ?string $size, ?bool $balcony, ?int $area)
+    public ?string $images;
+
+    public function __construct(string $id, ?bool $animals, ?string $furniture, ?bool $elevator, ?int $stairs, ?string $condition, ?string $size, ?bool $balcony, ?int $area, ?string $images)
     {
         $this->id = $id;
         $this->animals = $animals;
@@ -43,6 +45,7 @@ class Apartment_detailed {
         $this->size = $size;
         $this->balcony = $balcony;
         $this->area = $area;
+        $this->images = $images;
     }
 
 }

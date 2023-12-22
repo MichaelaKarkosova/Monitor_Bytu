@@ -30,7 +30,7 @@ class SRealityReader implements ChainableReaderInterface {
         $i = 1;
         $finalapartments = [];
         //pokud stránka není v url, resp. v geetu není uvedena, automaticky ji bereme jako první a dodáváme tuto informaci do odkazu
-        
+
         if (!strpos($source, "&page")){
             $source .= "&page=1";
         }
@@ -56,10 +56,10 @@ class SRealityReader implements ChainableReaderInterface {
          $ok = $count > 0;
            //print_r($count);
           $alldata = $json["_embedded"]["estates"];
-        
+
             //pokud je vše ok, vytvoříme crawler filter najednotlivé "dlaždice" bytů
             //print_r($crawler->filter('.paging-next.disabled')->count());
- 
+
             // /cs/v2/estates/3006920012
            // print_r($crawler->filter(' "estates": ['));
            // print_r("Count je $count");
@@ -79,7 +79,7 @@ class SRealityReader implements ChainableReaderInterface {
                         //a nastavíme ji také do longpartu - bude potřeba při vkládání do DB
                         $longpart = trim($locality);
                         //rozdělíme část Prahy na ulice a část do pole
-                        if (strpos(",", $part)){
+                        if (strpos($part, ",")){
                             $partsplitted = explode(",", $part);
                             $finalpart = "";
                             //projedeme pole hodnot - ulice, část, popř. se zde může objevit okres
@@ -89,7 +89,7 @@ class SRealityReader implements ChainableReaderInterface {
                             }
                         }
                         else{
-                        	print_r("part = finalpart");
+                            print_r("part = finalpart");
                             $finalpart = $part;
                         }
                         //provedeme regexem replace klíčových slov - Okres Praha, Praha 1-22 a Praha -. Zůstanem nám tedy jen část, např. Holešovice.
@@ -132,7 +132,7 @@ class SRealityReader implements ChainableReaderInterface {
         $db = $this->db->getConnection();
         $apartments_all = [];
 
-            
+
         //vybereme jen byty ze zdroje realitymix
         $allapartments = $db->query("select url, imported from byty where url like '%sreality%' and DATE(imported) = DATE(NOW())")->fetch_all(MYSQLI_ASSOC);
         //projdeme všechny byty z databáze
@@ -144,7 +144,7 @@ class SRealityReader implements ChainableReaderInterface {
             print_r($http_response_header[0]);
             if (strpos($http_response_header[0], "200")){
                $json = json_decode(file_get_contents($url), true);
-      
+
                 $longpart = $json["locality"]["value"];
                 $elevator = $json["recommendations_data"]["elevator"];
                 $balcony = $json["recommendations_data"]["balcony"];
@@ -197,7 +197,7 @@ class SRealityReader implements ChainableReaderInterface {
                         $stairs = $item["value"][0];
                     }
                 }
-                 $apartment = new Apartment_detailed($url, (bool) $animals, $furniture, (bool) $elevator, (int) $stairs, $condition, $size, (bool) $balcony, (int) $area);
+                 $apartment = new Apartment_detailed($url, (bool) $animals, $furniture, (bool) $elevator, (int) $stairs, $condition, $size, (bool) $balcony, (int) $area, NULL);
                  print_r($apartment);
                  $apartments_all[] = $apartment;
                 }
@@ -209,21 +209,19 @@ class SRealityReader implements ChainableReaderInterface {
 
 
     protected function checkSize(string $note) {
-        if ($this->checkForString($note,"1+kk", "")) return "1+kk";
-        else if ($this->checkForString($note,"1+1", "")) return "1+1";
-        else if ($this->checkForString($note,"Garso", "")) return "Garsoniéra";
-        else if ($this->checkForString($note,"2+1", "")) return "2+1";
-        else if ($this->checkForString($note,"2+kk", "")) return "2+kk";
-        else if ($this->checkForString($note,"3+1", "")) return "3+1";
-        else if ($this->checkForString($note,"3+kk", "")) return "3+kk";
-        else if ($this->checkForString($note,"4+1", "")) return "4+1";
-        else if ($this->checkForString($note,"4+kk", "")) return "4+kk";
-        else if ($this->checkForString($note,"5+1", "")) return "5+1";
-        else if ($this->checkForString($note,"5+kk", "")) return "5+kk";
-        else if ($this->checkForString($note,"6+", "")) return "6 a více";
-        else if ($this->checkForString($note,"pokoj", "")) return "pokoj";
-        else if ($this->checkForString($note, "kk", "")) return "1+kk";
-        else if ($this->checkForString($note, "1+", "")) return "1+1";
+        if (strpos($note,"1+kk")) return "1+kk";
+        else if (strpos($note,"1+1")) return "1+1";
+        else if (strpos($note,"Garso")) return "Garsoniéra";
+        else if (strpos($note,"2+1")) return "2+1";
+        else if (strpos($note,"2+kk")) return "2+kk";
+        else if (strpos($note,"3+1")) return "3+1";
+        else if (strpos($note,"3+kk")) return "3+kk";
+        else if (strpos($note,"4+1")) return "4+1";
+        else if (strpos($note,"4+kk")) return "4+kk";
+        else if (strpos($note,"5+1")) return "5+1";
+        else if (strpos($note,"5+kk")) return "5+kk";
+        else if (strpos($note,"pokoj")) return "pokoj";
+        else if (strpos($note,"+")) return "6 a více";
         else return null;
     }
     protected function checkAnimals(string $note) {
