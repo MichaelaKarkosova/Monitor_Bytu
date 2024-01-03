@@ -62,7 +62,6 @@ class BezRealitkyReader implements ChainableReaderInterface {
                         $name = str_replace("Pronájem bytu", "Pronájem bytu ", $name);
                         $name = str_replace("Pronájem garáže", "Pronájem garáže ", $name);
                         $name = str_replace("Pronájem kanceláře", "Pronájem kanceláře ", $name);
-                        $name = str_replace("Pronájem bytu-Spolubydlení", "Pronájem bytu - Spolubydlení", $name);
                         //nastavíme pomocnou proměnnou
                         $nodes =  $item->filter('.PropertyPrice_propertyPrice__lthza > span');
                         $i = 0;
@@ -96,18 +95,14 @@ class BezRealitkyReader implements ChainableReaderInterface {
                         }
                           if ($part){
                         //provedeme regexem replace klíčových slov - Okres Praha, Praha 1-22 a Praha -. Zůstanem nám tedy jen část, např. Holešovice.
-                            $finalpart = str_replace(" Praha", "Praha", $finalpart);
-                            $finalpart = preg_replace("/Praha (\d+)( -) /", "", $finalpart);
-                            $finalpart = str_replace("Praha - ", "", $finalpart);
-                            $finalpart = str_replace(", okres Praha", "", $finalpart);
-                            //vrátíme object Apartment
-                            $finalpart = str_replace(" Praha - ", "", $finalpart);
-                        }
-
-
-                           $a = new Apartment($href, $name, $href, (int) ($finalprice - $rent), (int) $finalprice, $finalpart ?? NULL, $longpart ?? NULL);
-
-                        //print_r($a);
+                        $finalpart = str_replace(" Praha", "Praha", $finalpart);
+                        $finalpart = preg_replace("/Praha (\d+)( -) /", "", $finalpart);
+                        $finalpart = str_replace("Praha - ", "", $finalpart);
+                        $finalpart = str_replace(", okres Praha", "", $finalpart);
+                        //vrátíme object Apartment
+                        $finalpart = str_replace(" Praha - ", "", $finalpart);
+                           $a = new Apartment($href, $name, $href, (int) ($finalprice - $rent), (int) $finalprice, $finalpart, $longpart);
+                      //  print_r($a);
                         return
                            $a;
                     });
@@ -141,21 +136,21 @@ class BezRealitkyReader implements ChainableReaderInterface {
             if (FALSE === $html) continue;
             $crawler = new Crawler(file_get_contents($a["url"]));
             $url= $a["url"];
-           // print_r($url);
-                $links[$url] = $crawler->filter('.propertyCarousel > div > div > div > a')->extract(['href']);
+            print_r($url);
+            $links[$url] = $crawler->filter('.propertyCarousel > div > div > div > a')->extract(['href']);
+
             $apartments_all[] = $crawler->filter('.ContentBox_contentBox__tD7YI')
                 ->each(static function (Crawler $item) use ($url, $links): Apartment_detailed {
-                   // print_r($item->filter('div.paramsTable:nth-child(2) > div:nth-child(2) > table >tbody > tr'));
-                    $nodes = $item->filter('div.paramsTable:nth-child(1) > div:nth-child(2) > table >tbody > tr');
-                     $nodes2 = $item->filter('div.paramsTable:nth-child(2) > div:nth-child(2) > table >tbody > tr');
-                    $data = [];
-                    foreach ($nodes as $n){
-                    //    print_r($n->textContent);
+                    //filtrujeme první tabulku
 
-                            if (strpos($n->textContent, "Podlaží") !== FALSE) {
-                                $stairs = $n->textContent;
+                    $data = $item->filter('div > section > div > div:nth-child(1) > table > tbody > tr')
+                        ->each(static function (Crawler $line) : ?array {
+                            //projdeme data v tabulce a porovnáme, zda obsahují požadovaný údaj. Pokud ano, uložíme do pole a vrátíme.
+                            if (strpos($line->text(), "Podlaží") !== FALSE) {
+                                $stairs = $line->text();
                                 $stairs = str_replace("Podlaží", "", $stairs);
-                                $data["stairs"] = (int) $stairs;
+                                return ["stairs" => (int) $stairs];
+
                             }
                             if (strpos($n->textContent, "Dispozice") !== FALSE) {
                                 $size = $n->textContent;
@@ -228,8 +223,22 @@ class BezRealitkyReader implements ChainableReaderInterface {
                             return $ap_d;
                             $aparts[] = $ap_d;                
                         });
-
+                    //přidáme fetchnutá data do pole, které obsahuje data obou tabulek
+                    $alldata = array_merge(...array_values(array_filter($data)),...array_values(array_filter($data2)));
+                    foreach ($alldata as $key => $value) {
+                        //pokud se hodnota nevrátila - např. ji zadavatel bytu nevyplnil, vrátíme prázdný string.
+                        if ($value == NULL){
+                            $alldata[$key] = "";
+                        }
                     }
-                    return array_merge(...$apartments_all);
-            }
+                    $images = json_encode($links[$url]);
+                    //vytvoříme nový apartment_detailed - byt s detaily
+                    $ap_d =  new Apartment_detailed($url , $alldata["animals"] ?? NULL, $alldata["furniture"] ?? NULL, $alldata["elevator"] ?? NULL, $alldata["stairs"] ?? NULL, $alldata["condition"] ?? NULL, $alldata["size"] ?? NULL, $alldata["balcony"] ?? NULL, $alldata["area"] ?? NULL, $images ?? NULL);
+                   print_r($ap_d);
+                    return $ap_d;
+                });
+        }
+        //vrátíme pole všech dat
+        return array_merge(...$apartments_all);
     }
+}
