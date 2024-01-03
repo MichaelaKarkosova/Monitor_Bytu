@@ -53,23 +53,23 @@ class DataWriter implements WriterInterface {
            if ($apartment->pricetotal == $apartment->price) $apartment->price = 0;
             //pokud byt existuje v databázi, provedeme update včetně novéhoi imported času. Pokud ne, vložíme ho.
             if ($existing != null && in_array($apartment->id, $existing)) {
-                $bindparams = [$apartment->id, $apartment->name, $apartment->url, $apartment->price, $apartment->pricetotal, $apartment->part, $apartment->longpart, $imported, $apartment->id];
-                $sql = "update `byty` set id=?, name=?, url=?, price=?, pricetotal=?, part=?, longpart=?, imported=? where id=?";
+                $bindparams = [$apartment->id, $apartment->name, $apartment->url, $apartment->price, $apartment->pricetotal, $apartment->part, $apartment->longpart, $apartment->id];
+                $sql = "update `byty` set id=?, name=?, url=?, price=?, pricetotal=?, part=?, longpart=?, imported=NOW() where id=?";
                 $stmt2 = $this->db->getConnection()->prepare($sql);
-                $stmt2->bind_param("sssiissss", ...array_values($bindparams));
+                $stmt2->bind_param("sssiisss", ...array_values($bindparams));
                 $stmt2->execute();
             }
             else {
-                $sql = "insert into byty (id, name, url, price, pricetotal, part, longpart, imported, first) values (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                $sql = "insert into byty (id, name, url, price, pricetotal, part, longpart, imported, first) values (?, ?, ?, ?, ?, ?, ?, NOW(), ?)";
                 $stmt2 = $this->db->getConnection()->prepare($sql);
-                $bindparams = [$apartment->id, $apartment->name, $apartment->url, $apartment->price, $apartment->pricetotal, $apartment->part, $apartment->longpart, $imported, $imported];
-                $stmt2->bind_param("sssiissss", ...array_values($bindparams));
+                $bindparams = [$apartment->id, $apartment->name, $apartment->url, $apartment->price, $apartment->pricetotal, $apartment->part, $apartment->longpart, $imported];
+                $stmt2->bind_param("sssiisss", ...array_values($bindparams));
                 $stmt2->execute();
                 //přidáme do pole nových bytů
                 $newUrls[] = $apartment->id;
             }
                                 //zapíšeme cenu
-        $this->writePrice($apartment->url, $apartment->price, $apartment->pricetotal, $apartment->part, $imported);
+       // $this->writePrice($apartment->url, $apartment->price, $apartment->pricetotal, $apartment->part, $imported);
             //přidáme do pole všech bytů
             $foundUrls[] = $apartment->id;
         }
@@ -86,7 +86,6 @@ class DataWriter implements WriterInterface {
     //zde zapíšeme detaily do databáze - přijdou sem detaily jednoho bytu
     public function WriteDetails(array $values): void {
         $toUpdate = [];
-        print_r($values);
         print_r("Writing details...");
         //projdeme pole dat a vložíme vše do databáze
         foreach ($values as $v) {
@@ -122,14 +121,13 @@ class DataWriter implements WriterInterface {
                 "id" => $v->id];
         }
         foreach ($toUpdate as $key=>$value){
-            $this->updatePrice($value["condition"], $value["area"], $value["size"], $value["furniture"], $value["id"]);
+       //     $this->updatePrice($value["condition"], $value["area"], $value["size"], $value["furniture"], $value["id"]);
         }
 
     }
     //zápis do tabulky, kde jsou historie cen
     public function writePrice(string $url, ?float $price, ?float $pricetotal, ?string $part, string $date){
         $db = $this->db->getConnection();
-        print_r($url);
         $sql = "insert into ceny(url, price, pricetotal, part, date) values (?, ?, ?, ?, ?)";
         $stmt = $db->prepare($sql);
         $stmt->bind_param("siiss", $url, $price, $pricetotal, $part, $date);
@@ -166,8 +164,7 @@ class DataWriter implements WriterInterface {
                 $condition = $c[0];
                 if ($condition == "") $condition = "NULL";
               $average =  $this->getPerM2($part, $condition);
-              if ($average[1] == false || $average[0] === 0 ||  $average[0] === "0") continue;
-                            print_r($average);
+              if ($average[1] == false || $average[0] === 0 ||  $average[0] === "0") continue;;
               $query = "insert into byty.average (part, stav, averageprice) values (?, ?, ?)";
               $stmt2 = $db->prepare($query);
               // print_r([$part, $condition, $average[0]]);
